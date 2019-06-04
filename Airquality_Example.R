@@ -36,8 +36,8 @@ fit_0 <- numeric(dim(X)[1])
 intercept_model <- lm.fit(x=as.matrix(X[,1]), y=y)
 fit_0 <- intercept_model$fitted.values
 
-init_zero <- rep(0, dim(X)[1])
-init_zero
+# init_zero <- rep(0, dim(X)[1])
+# init_zero
 
 fitted_values <- fit_0
 
