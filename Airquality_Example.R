@@ -27,9 +27,10 @@ y <- data[, as.character(formula)[2]]
 nu <- 0.1
 
 
+
 ###########################################################################################
 
-# Initialize with Intercept model
+# Initialize with Intercept model (similar to family@offset(y))
 
 fit_0 <- numeric(dim(X)[1])
 intercept_model <- lm.fit(x=as.matrix(X[,1]), y=y)
