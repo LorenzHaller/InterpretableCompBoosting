@@ -2,7 +2,7 @@
 
 # loss function
 # y - the target
-# yhat - the fitted values
+# fit - the fitted values
 
 source("family.R")
 
@@ -12,8 +12,6 @@ family = Gaussian()
 ngradient <- family@ngradient
 riskfct <- family@risk
 
-
-#'www.github.com/andrebleier/cheapml
 
 grad_boost <- function(formula, data, nu = 0.01, stop, 
                        grad.fun, loss.fun, yhat.init = 0) {

@@ -84,9 +84,8 @@ for(i in 1:100000){
   lm_coeffs[model_select] <- lm_coeffs[model_select] + nu * lm_coeffs_temp[model_select]
   fitted_values <- X %*% lm_coeffs
   
-  lm_fit
-  lm_coeffs
 }
 
+# Print the coefficients of the final model
 lm_coeffs
 
