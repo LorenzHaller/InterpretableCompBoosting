@@ -18,7 +18,6 @@ y <- data[, as.character(formula)[2]]
 
 
 
-
 linear_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()){
   
   # Load Gradient- and Loss/Riskfunction
@@ -26,11 +25,23 @@ linear_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
   source("family.R")
   ngradient <- family@ngradient
   riskfct <- family@risk
+  
+  # Standardize features
+  
+  # if all features are numeric
+  X_scaled <- X
+  X_scaled[,2:dim(X)[2]] <- scale(X)[,2:dim(X)[2]]
+  
+  # only numeric features
+  # numeric_features = c()
+  # X <- X %>% mutate_each_(funs(scale(.) %>% as.vector), 
+  #                             vars=numeric_features)
+  
 
   # Initialize with Intercept model (similar to family@offset(y))
   
-  fit_0 <- numeric(dim(X)[1])
-  intercept_model <- lm.fit(x=as.matrix(X[,1]), y=y)
+  fit_0 <- numeric(dim(X_scaled)[1])
+  intercept_model <- lm.fit(x=as.matrix(X_scaled[,1]), y=y)
   fit_0 <- intercept_model$fitted.values
   
   # init_zero <- rep(0, dim(X)[1])
@@ -43,10 +54,10 @@ linear_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
   
   # Set up vectors
   
-  lm_fit = numeric(dim(X)[2])
-  lm_coeffs = numeric(dim(X)[2])
-  pred_matrix = matrix(0, nrow = dim(X)[1], ncol = dim(X)[2])
-  names(lm_coeffs) <- names(lm_fit) <- colnames(X)
+  lm_fit = numeric(dim(X_scaled)[2])
+  lm_coeffs = numeric(dim(X_scaled)[2])
+  pred_matrix = matrix(0, nrow = dim(X_scaled)[1], ncol = dim(X_scaled)[2])
+  names(lm_coeffs) <- names(lm_fit) <- colnames(X_scaled)
   lm_coeffs[1] <- intercept_model$coefficients[1]
   
   
@@ -58,10 +69,10 @@ linear_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
     
     # Fit base learners to the negative gradient
     
-    lm_coeffs_temp = numeric(dim(X)[2])
+    lm_coeffs_temp = numeric(dim(X_scaled)[2])
     
     for(feat in 1:dim(X)[2]){
-      bl_model <- lm.fit(x=as.matrix(X[,feat]), y=u)
+      bl_model <- lm.fit(x=as.matrix(X_scaled[,feat]), y=u)
       lm_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
       pred_matrix[,feat] <- bl_model$fitted.values
       lm_coeffs_temp[feat] <- bl_model$coefficients
@@ -75,11 +86,11 @@ linear_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
     # }
       
     # Create new fitted values by model
-    best_model_fit <- lm.fit(x=as.matrix(X[,model_select]), y=u)$fitted.values
+    best_model_fit <- lm.fit(x=as.matrix(X_scaled[,model_select]), y=u)$fitted.values
     
     # Update model parameters
     lm_coeffs[model_select] <- lm_coeffs[model_select] + nu * lm_coeffs_temp[model_select]
-    fitted_values <- X %*% lm_coeffs
+    fitted_values <- X_scaled %*% lm_coeffs
     
   }
   
@@ -88,4 +99,10 @@ linear_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
 }
 
 # Execute function
-linear_model_boost(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian())
+linear_model_boost(y=y, X=X, nu=0.1, mstop=1000, family=Gaussian())
+
+# Compare to other methods
+lm.fit(x=X_scaled, y=y)$coefficients
+mboost::mboost(formula = formula, data = data, baselearner = "bols")
+
+
