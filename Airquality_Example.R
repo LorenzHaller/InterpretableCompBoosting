@@ -105,4 +105,11 @@ linear_model_boost(y=y, X=X, nu=0.1, mstop=1000, family=Gaussian())
 lm.fit(x=X_scaled, y=y)$coefficients
 mboost::mboost(formula = formula, data = data, baselearner = "bols")
 
+mboost_bs = mboost::mboost(formula = formula, data = data, baselearner = "bbs")
 
+
+str(mboost_bs)
+mboost_bs$baselearner$`bbs(Wind)`
+mboost_bs$basemodel$`bbs(Wind)`
+mboost_bs$coef()
+mboost_bs
