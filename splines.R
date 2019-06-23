@@ -110,9 +110,10 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
 # Execute function
 linear_model_boost(y=y, X=X, nu=0.1, mstop=1000, family=Gaussian())
 
-
+# COmpare to mboost
+mb = mboost(formula=formula, data=data, baselearner = "bbs")
 
 
 spline_fit_test = lm(Ozone ~ Solar.R + bs(Wind, df = 4) + Temp + Month + Day, data = data )
 spline_fit_test
-bs()
+b
