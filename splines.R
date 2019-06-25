@@ -42,7 +42,7 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
   # Set up vectors
   
   # create a vector to save the fit of all features
-  spline_fit = numeric(dim(X_scaled)[2]-1)
+  spline_fit = numeric(dim(X_scaled)[2])
   # create a vector to save all feature coeffcients
   spline_coeffs = numeric(dim(X_scaled)[2])
   # create a matrix to save all fitted values
@@ -54,8 +54,8 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
   
   
   for(i in 1:mstop){
-    # Calculate the negative gradient and update the data frame
     
+    # Calculate the negative gradient and update the data frame
     data_temp[,target] <- u <- ngradient(y = y, f = fitted_values)
     
   
@@ -68,23 +68,39 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
     
     spline_coeffs_temp = numeric(dim(X_scaled)[2])
     
-    for(feat in 1:(dim(data)[2] - 1)){
+    for(feat in 1:(dim(data)[2])){
       
-      # Create a formula for the current feature
-      feature = eval(colnames(data)[feat+1])
-      feature_spline = paste("bs(", feature, ")")
-      formula_temp = as.formula(paste(target, feature_spline, sep = " ~ "))
-      formula_temp = terms.formula(formula_temp)
-      formula_temp
       
-      # fit the model
-      bl_model <- lm(formula = formula_temp, data = data_temp)
-      # calculate the fit and save it
-      spline_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
-      # fill the matrix of all fitted values for all features
-      pred_matrix[,feat] <- bl_model$fitted.values
-      # save the coefficients
-      #spline_coeffs_temp[feat] <- bl_model$coefficients
+      ####################### INTERCEPT #############################
+      if(feat == 1){
+        # fit new intercept model
+        bl_model <- lm(as.formula(paste(target, bs(1,df=24), sep = " ~ ")), data=data_temp)
+        # calculate the fit and save it
+        spline_fit[1] <- riskfct(y=u, f=bl_model$fitted.values)
+        # fill the matrix of all fitted values for all features
+        pred_matrix[,1] <- bl_model$fitted.values
+      
+      }
+      
+      ###################### OTHER FEATURES ############################
+      else if(feat > 1){
+        
+        # Create a formula for the current feature
+        feature = eval(colnames(data)[feat])
+        feature_spline = paste("bs(", feature, ",df=24)")
+        formula_temp = as.formula(paste(target, feature_spline, sep = " ~ "))
+        formula_temp = terms.formula(formula_temp)
+        formula_temp
+        
+        # fit the model
+        bl_model <- lm(formula = formula_temp, data = data_temp)
+        # calculate the fit and save it
+        spline_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
+        # fill the matrix of all fitted values for all features
+        pred_matrix[,feat] <- bl_model$fitted.values
+        # save the coefficients
+        #spline_coeffs_temp[feat] <- bl_model$coefficients
+      }
     }
     
     # Choose model with smallest loss
@@ -116,4 +132,5 @@ mb = mboost(formula=formula, data=data, baselearner = "bbs")
 
 spline_fit_test = lm(Ozone ~ Solar.R + bs(Wind, df = 4) + Temp + Month + Day, data = data )
 spline_fit_test
+
 b
