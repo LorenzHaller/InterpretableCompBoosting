@@ -43,8 +43,15 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
   
   # create a vector to save the fit of all features
   spline_fit = numeric(dim(X_scaled)[2])
+  
   # create a vector to save all feature coeffcients
   spline_coeffs = numeric(dim(X_scaled)[2])
+  # Better Idea: Create a list with the coefficients for all the features
+  # as it is necessary for the splines.
+  
+  coeff_list <- 
+  
+  
   # create a matrix to save all fitted values
   pred_matrix = matrix(0, nrow = dim(X_scaled)[1], ncol = dim(X_scaled)[2])
   # assign the column names
