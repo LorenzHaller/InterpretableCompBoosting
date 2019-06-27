@@ -45,19 +45,26 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
   spline_fit = numeric(dim(X_scaled)[2])
   
   # create a vector to save all feature coeffcients
-  spline_coeffs = numeric(dim(X_scaled)[2])
+  # spline_coeffs = numeric(dim(X_scaled)[2])
+  
   # Better Idea: Create a list with the coefficients for all the features
   # as it is necessary for the splines.
+  # The list consists of multiple vectors of length 24 (for the splines)
+  coeff_list <- list()
+  coeff_list[["Intercept"]] <- intercept_model$fitted.values[1]
+  names(coeff_list[["Intercept"]]) <- colnames(X_scaled)
+  for (cn in 2:length(colnames(X))){
+    coeff_list[[colnames(X)[cn]]] = vector(mode = "numeric", length = 24)
+  }
   
-  coeff_list <- 
-  
-  
+
   # create a matrix to save all fitted values
   pred_matrix = matrix(0, nrow = dim(X_scaled)[1], ncol = dim(X_scaled)[2])
   # assign the column names
   names(spline_coeffs) <- names(spline_fit) <- colnames(X_scaled)
+  
   # add the intercept coefficient to the coefficient vector
-  spline_coeffs[1] <- intercept_model$coefficients[1]
+  # spline_coeffs[1] <- intercept_model$coefficients[1]
   
   
   for(i in 1:mstop){
@@ -65,32 +72,39 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
     # Calculate the negative gradient and update the data frame
     data_temp[,target] <- u <- ngradient(y = y, f = fitted_values)
     
-  
-  
-    # Extract the target from the data for the formula
-    #target = eval(colnames(data)[1])
+    
+    
+    
+    # Create a list for the temporary results 
+    coeff_list_temp <- list()
+    coeff_list_temp[["Intercept"]] <- vector(mode = "numeric", length = dim(X)[2])
+    names(coeff_list_temp[["Intercept"]]) <- colnames(X_scaled)
+    for (cn in 2:length(colnames(X))){
+      coeff_list_temp[[colnames(X)[cn]]] = vector(mode = "numeric", length = 24)
+    }
+    
+    
     
     
     # Fit base learners to the negative gradient
-    
-    spline_coeffs_temp = numeric(dim(X_scaled)[2])
     
     for(feat in 1:(dim(data)[2])){
       
       
       ####################### INTERCEPT #############################
-      if(feat == 1){
-        # fit new intercept model
-        bl_model <- lm(as.formula(paste(target, bs(1,df=24), sep = " ~ ")), data=data_temp)
-        # calculate the fit and save it
-        spline_fit[1] <- riskfct(y=u, f=bl_model$fitted.values)
-        # fill the matrix of all fitted values for all features
-        pred_matrix[,1] <- bl_model$fitted.values
-      
-      }
+      ##### DOES IT MAKE SENSE ????? ##########################
+      # if(feat == 1){
+      #   # fit new intercept model
+      #   bl_model <- lm(as.formula(paste(target, bs(1,df=24), sep = " ~ ")), data=data_temp)
+      #   # calculate the fit and save it
+      #   spline_fit[1] <- riskfct(y=u, f=bl_model$fitted.values)
+      #   # fill the matrix of all fitted values for all features
+      #   pred_matrix[,1] <- bl_model$fitted.values
+      # 
+      # }
       
       ###################### OTHER FEATURES ############################
-      else if(feat > 1){
+      if(feat > 1){
         
         # Create a formula for the current feature
         feature = eval(colnames(data)[feat])
@@ -105,7 +119,13 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
         spline_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
         # fill the matrix of all fitted values for all features
         pred_matrix[,feat] <- bl_model$fitted.values
-        # save the coefficients
+        
+        # save the coefficients to the temporary list
+        coeff_list_temp[["Intercept"]][feat] <- bl_model$coefficients[1]
+        for (spline_number in 1:24){
+          coeff_list_temp[[feature]][spline_number] <- bl_model$coefficients[[spline_number]]
+        }
+        
         #spline_coeffs_temp[feat] <- bl_model$coefficients
       }
     }
@@ -120,15 +140,36 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
     # Create new fitted values by model
     best_model_fit <- lm.fit(x=as.matrix(X_scaled[,model_select]), y=u)$fitted.values
     
-    # Update model parameters
-    spline_coeffs[model_select] <- spline_coeffs[model_select] + nu * spline_coeffs_temp[model_select]
-    fitted_values <- X_scaled %*% spline_coeffs
+    # Update model parameters in original coefficients matrix
+    #coeff_list[["Intercept"]] <- coeff_list[["Intercept"]] + nu * coeff_list_temp[["Intercept"]][model_select]
+    coeff_list[[model_select]] <- coeff_list[[model_select]] + nu * coeff_list_temp[[model_select]]
+    
+    #coeff_list[[feature]][spline_number] <- bl_model$coefficients[[spline_number]]
+    
+    #spline_coeffs[model_select] <- spline_coeffs[model_select] + nu * spline_coeffs_temp[model_select]
+    
+    fitted_values <- fitted_values + nu * pred_matrix[,model_select]
+    ####  fitted_values <- X_scaled %*% spline_coeffs
     
   }
   
   # Print the coefficients of the final model
   print(spline_coeffs)
 }
+
+
+
+
+
+#### Problem: How to treat NAs in the coefficients????
+
+
+
+
+
+
+
+
 
 # Execute function
 linear_model_boost(y=y, X=X, nu=0.1, mstop=1000, family=Gaussian())
