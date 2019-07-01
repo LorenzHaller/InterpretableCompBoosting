@@ -112,4 +112,4 @@ str(mboost_bs)
 mboost_bs$baselearner$`bbs(Wind)`
 mboost_bs$basemodel$`bbs(Wind)`
 mboost_bs$coef()
-mboost_bs
+mboost_bs$risk()

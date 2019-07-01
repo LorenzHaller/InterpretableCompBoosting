@@ -1,7 +1,7 @@
 # Splines
 library(splines)
 
-spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()){
+spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
   
   # Create a working data set and set target variable
   data_temp <- data
@@ -52,7 +52,7 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
   # The list consists of multiple vectors of length 24 (for the splines)
   coeff_list <- list()
   coeff_list[["Intercept"]] <- intercept_model$fitted.values[1]
-  names(coeff_list[["Intercept"]]) <- colnames(X_scaled)
+  names(coeff_list[["Intercept"]]) <- colnames(X_scaled)[1]
   for (cn in 2:length(colnames(X))){
     coeff_list[[colnames(X)[cn]]] = vector(mode = "numeric", length = 24)
   }
@@ -61,7 +61,7 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
   # create a matrix to save all fitted values
   pred_matrix = matrix(0, nrow = dim(X_scaled)[1], ncol = dim(X_scaled)[2])
   # assign the column names
-  names(spline_coeffs) <- names(spline_fit) <- colnames(X_scaled)
+  #names(spline_coeffs) <- names(spline_fit) <- colnames(X_scaled)
   
   # add the intercept coefficient to the coefficient vector
   # spline_coeffs[1] <- intercept_model$coefficients[1]
