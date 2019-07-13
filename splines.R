@@ -1,7 +1,9 @@
 # Splines
-library(splines)
+
 
 spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
+  
+  library(splines)
   
   # Create a working data set and set target variable
   data_temp <- data
@@ -61,7 +63,8 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
   # create a matrix to save all fitted values
   pred_matrix = matrix(0, nrow = dim(X_scaled)[1], ncol = dim(X_scaled)[2])
   # assign the column names
-  #names(spline_coeffs) <- names(spline_fit) <- colnames(X_scaled)
+  #names(spline_coeffs) <- 
+  names(spline_fit) <- colnames(X_scaled)
   
   # add the intercept coefficient to the coefficient vector
   # spline_coeffs[1] <- intercept_model$coefficients[1]
@@ -93,15 +96,15 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
       
       ####################### INTERCEPT #############################
       ##### DOES IT MAKE SENSE ????? ##########################
-      # if(feat == 1){
-      #   # fit new intercept model
-      #   bl_model <- lm(as.formula(paste(target, bs(1,df=24), sep = " ~ ")), data=data_temp)
-      #   # calculate the fit and save it
-      #   spline_fit[1] <- riskfct(y=u, f=bl_model$fitted.values)
-      #   # fill the matrix of all fitted values for all features
-      #   pred_matrix[,1] <- bl_model$fitted.values
-      # 
-      # }
+      if(feat == 1){
+        # fit new intercept model
+        bl_model <- lm(as.formula(paste(target, bs(1,df=24), sep = " ~ ")), data=data_temp)
+        # calculate the fit and save it
+        spline_fit[1] <- riskfct(y=u, f=bl_model$fitted.values)
+        # fill the matrix of all fitted values for all features
+        pred_matrix[,1] <- bl_model$fitted.values
+
+      }
       
       ###################### OTHER FEATURES ############################
       if(feat > 1){
@@ -153,11 +156,18 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
     
   }
   
+  return_list <- list()
+  return_list[["Coefficients"]] <- coeff_list
+  return_list[["Fitted_Values"]] <- fitted_values
+  return_list[["Risk"]] <- spline_fit[model_select][[1]]
+  
   # Print the coefficients of the final model
-  print(spline_coeffs)
+  return(return_list)
 }
 
 
+#### Test
+spline_result <- spline_model_boost(y=y,X=X,nu=0.1,mstop=100, family=Gaussian())
 
 
 
@@ -165,20 +175,11 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
 
 
 
+# Compare to mboost
+mb = mboost(formula=formula, data=data, baselearner = "bbs", 
+            control = boost_control(nu=0.1,mstop = 100))
+mb$risk()
 
-
-
-
-
-
-# Execute function
-linear_model_boost(y=y, X=X, nu=0.1, mstop=1000, family=Gaussian())
-
-# COmpare to mboost
-mb = mboost(formula=formula, data=data, baselearner = "bbs")
-
-
-spline_fit_test = lm(Ozone ~ Solar.R + bs(Wind, df = 4) + Temp + Month + Day, data = data )
-spline_fit_test
-
-b
+# Compare via riskfct function
+riskfct(y=y,spline_result$Fitted_Values)
+riskfct(y=y,f=mb$fitted())
