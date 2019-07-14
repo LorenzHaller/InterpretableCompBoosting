@@ -17,14 +17,14 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
   
   # Standardize features
   
-  # if all features are numeric
-  X_scaled <- X
-  X_scaled[,2:dim(X)[2]] <- scale(X)[,2:dim(X)[2]]
+    # if all features are numeric
+    X_scaled <- X
+    X_scaled[,2:dim(X)[2]] <- scale(X)[,2:dim(X)[2]]
   
-  # only numeric features
-  # numeric_features = c()
-  # X <- X %>% mutate_each_(funs(scale(.) %>% as.vector), 
-  #                             vars=numeric_features)
+    # only numeric features
+    # numeric_features = c()
+    # X <- X %>% mutate_each_(funs(scale(.) %>% as.vector), 
+    #                             vars=numeric_features)
   
   
   # Initialize with Intercept model (similar to family@offset(y))
@@ -75,9 +75,6 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
     # Calculate the negative gradient and update the data frame
     data_temp[,target] <- u <- ngradient(y = y, f = fitted_values)
     
-    
-    
-    
     # Create a list for the temporary results 
     coeff_list_temp <- list()
     coeff_list_temp[["Intercept"]] <- vector(mode = "numeric", length = dim(X)[2])
@@ -87,15 +84,11 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
     }
     
     
-    
-    
     # Fit base learners to the negative gradient
     
     for(feat in 1:(dim(data)[2])){
-      
-      
+    
       ####################### INTERCEPT #############################
-      ##### DOES IT MAKE SENSE ????? ##########################
       if(feat == 1){
         # fit new intercept model
         bl_model <- lm(as.formula(paste(target, bs(1,df=24), sep = " ~ ")), data=data_temp)
@@ -105,7 +98,6 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
         pred_matrix[,1] <- bl_model$fitted.values
 
       }
-      
       ###################### OTHER FEATURES ############################
       if(feat > 1){
         
@@ -128,8 +120,6 @@ spline_model_boost <- function(y=y, X=X, nu=0.1, mstop=100, family=Gaussian()){
         for (spline_number in 1:24){
           coeff_list_temp[[feature]][spline_number] <- bl_model$coefficients[[spline_number]]
         }
-        
-        #spline_coeffs_temp[feat] <- bl_model$coefficients
       }
     }
     
