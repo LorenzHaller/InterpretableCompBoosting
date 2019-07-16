@@ -104,6 +104,45 @@ interpretable_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Ga
       
     }
     
+  
+  ### Phase 2: Splines
+  
+  library(splines)
+  
+  # Create a working data set and set target variable
+  data_temp <- data
+  target <- all.vars(formula)[1]
+  
+  # # create a vector to save the fit of all features
+  # spline_fit = numeric(dim(X_scaled)[2])
+  # names(spline_fit) <- colnames(X_scaled)
+  
+  # Create a list with the coefficients for all the features
+  # as it is necessary for the splines.
+  # The list consists of multiple vectors of length 24 (for the splines)
+  coeff_list <- list()
+  
+  # Add the intercept from the linear model part
+  coeff_list[["Intercept"]] <- lm_coeffs[1]
+  names(coeff_list[["Intercept"]]) <- colnames(X_scaled)[1]
+  
+  # Add the linear coefficients from the first phase
+  coeff_list[["Linear_coefficients"]] <- lm_coeffs
+  
+  # Add vectors of length 24 for all other features
+  for (cn in 2:length(colnames(X))){
+    coeff_list[[colnames(X)[cn]]] = vector(mode = "numeric", length = 24)
+  }
+  
+  
+  while((iteration <= mstop)){
+    
+    
+  }
+    
+  
+
+  
    
   
   
