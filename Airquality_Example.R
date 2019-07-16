@@ -66,6 +66,7 @@ linear_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()
   
     u <- ngradient(y = y, f = fitted_values)
     
+    risk <- riskfct(y = y, f = fitted_values)
     
     # Fit base learners to the negative gradient
     
