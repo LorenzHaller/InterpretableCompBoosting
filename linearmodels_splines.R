@@ -113,9 +113,9 @@ interpretable_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Ga
   data_temp <- data
   target <- all.vars(formula)[1]
   
-  # # create a vector to save the fit of all features
-  # spline_fit = numeric(dim(X_scaled)[2])
-  # names(spline_fit) <- colnames(X_scaled)
+  # create a vector to save the fit of all features
+  spline_fit = numeric(dim(X_scaled)[2])
+  names(spline_fit) <- colnames(X_scaled)
   
   # Create a list with the coefficients for all the features
   # as it is necessary for the splines.
@@ -134,9 +134,83 @@ interpretable_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Ga
     coeff_list[[colnames(X)[cn]]] = vector(mode = "numeric", length = 24)
   }
   
+  # Calculate the negative gradient and update the data frame
+  data_temp[,target] <- ngradient(y = y, f = fitted_values)
   
-  while((iteration <= mstop)){
+  # Create a list for the temporary results 
+  coeff_list_temp <- list()
+  coeff_list_temp[["Intercept"]] <- vector(mode = "numeric", length = dim(X)[2])
+  names(coeff_list_temp[["Intercept"]]) <- colnames(X_scaled)
+  for (cn in 2:length(colnames(X))){
+    coeff_list_temp[[colnames(X)[cn]]] = vector(mode = "numeric", length = 24)
+  }
+  
+  # Increase risk_temp to make first spline iteration possible
+  risk_temp <- risk_temp + 2*epsilon_lin
+  
+  
+  while((iteration <= mstop) & (risk_temp - risk_iter[iteration+1] >= epsilon_lin)){
     
+    #Add one to the iteration number
+    iteration <- iteration + 1
+    
+    #Calculate new risk for the current iteration (before updating the fitted values)
+    risk_temp <- riskfct(y = y, f = fitted_values)
+    
+    # Calculate the new negative gradient 
+    u <- ngradient(y = y, f = fitted_values)
+    
+    # Fit base learners to the negative gradient
+    for(feat in 1:(dim(data)[2])){
+      ####################### INTERCEPT #############################
+      if(feat == 1){
+        # fit new intercept model
+        bl_model <- lm(as.formula(paste(target, bs(1,df=24), sep = " ~ ")), data=data_temp)
+        # calculate the fit and save it
+        spline_fit[1] <- riskfct(y=u, f=bl_model$fitted.values)
+        # fill the matrix of all fitted values for all features
+        pred_matrix[,1] <- bl_model$fitted.values
+      }
+      ###################### OTHER FEATURES ############################
+      if(feat > 1){
+        
+        # Create a formula for the current feature
+        feature = eval(colnames(data)[feat])
+        feature_spline = paste("bs(", feature, ",df=24)")
+        formula_temp = as.formula(paste(target, feature_spline, sep = " ~ "))
+        formula_temp = terms.formula(formula_temp)
+        formula_temp
+        
+        # fit the model
+        bl_model <- lm(formula = formula_temp, data = data_temp)
+        # calculate the fit and save it
+        spline_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
+        # fill the matrix of all fitted values for all features
+        pred_matrix[,feat] <- bl_model$fitted.values
+        
+        # save the coefficients to the temporary list
+        coeff_list_temp[["Intercept"]][feat] <- bl_model$coefficients[1]
+        for (spline_number in 1:24){
+          coeff_list_temp[[feature]][spline_number] <- bl_model$coefficients[[spline_number]]
+        }
+      }
+    }
+    
+    # Choose model with smallest loss
+    model_select <- which.min(spline_fit)
+    feature_select = eval(colnames(data)[model_select])
+    
+    # Update model parameters in original coefficients matrix
+    coeff_list[[feature_select]] <- coeff_list[[feature_select]] + nu * coeff_list_temp[[feature_select]]
+    
+    # Update the fitted values
+    fitted_values <- fitted_values + nu * pred_matrix[,model_select]
+    
+    # Save the risk of the iteration
+    risk_iter[iteration+1] <- riskfct(y = y, f = fitted_values)
+    
+    # Calculate the negative gradient and update the data frame
+    data_temp[,target] <- ngradient(y = y, f = fitted_values)
     
   }
     
