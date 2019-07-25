@@ -215,11 +215,14 @@ interpretable_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Ga
   }
     
   
+  # Create a list to return 
+  return_list <- list()
+  return_list[["Coefficients"]] <- coeff_list
+  return_list[["Fitted_Values"]] <- fitted_values
+  return_list[["Risk"]] <- risk_iter
+  
+  # Print the coefficients of the final model
+  return(return_list)
 
-  
-   
-  
-  
-  
-  
+
 }
