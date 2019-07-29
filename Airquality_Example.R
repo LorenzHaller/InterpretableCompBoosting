@@ -106,15 +106,15 @@ linear_model_boost(y=y, X=X, nu=0.1, mstop=1000, family=Gaussian())
 lm.fit(x=X_scaled, y=y)$coefficients
 mboost::mboost(formula = formula, data = data, baselearner = "bols")
 
-mboost_bs = mboost::mboost(formula = formula, data = data, baselearner = "bbs",
-                           control = boost_control(mstop = 500))
-
+mboost_bols_bs = mboost::mboost(formula = formula, data = data, baselearner = c("btree"),
+                           control = boost_control(nu = 0.1, mstop = 500))
+mboost_bols_bs$risk()
 
 str(mboost_bs)
 mboost_bs$baselearner$`bbs(Wind)`
 mboost_bs$basemodel$`bbs(Wind)`
 mboost_bs$coef()
-mboost_bs$risk()
+
 
 riskfct(y=y,f=mboost_bs$fitted())
 riskfct(y=y,f=fitted_values)
