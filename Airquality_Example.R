@@ -1,23 +1,3 @@
-# Airquality Data Example
-
-setwd("C:/Users/halle/Downloads/Uni/Interpretable Machine Learning")
-
-# Load data
-
-data("airquality")
-attach(airquality)
-data <- na.omit(airquality)
-
-
-# Get model formula and prepare data
-
-formula <- Ozone ~ Solar.R + Wind + Temp + Month + Day
-formula <- terms.formula(formula)
-X <- model.matrix(formula, data)
-y <- data[, as.character(formula)[2]]
-
-
-
 linear_model_boost <- function(y=y, X=X, nu=0.1, mstop=100000, family=Gaussian()){
   
   # Load Gradient- and Loss/Riskfunction
