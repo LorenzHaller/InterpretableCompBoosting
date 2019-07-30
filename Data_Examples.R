@@ -1,12 +1,12 @@
 interpretable_comp_boost(data, formula, nu=0.05, mstop=500, family=Gaussian(),
                           epsilon_rel_lin = 0.00001)
 
-mboost_bols_bs = mboost::mboost(formula = formula, data = data,
-                                control = boost_control(nu = 0.05, mstop = 500))
-mboost_bols_bs$risk()
+mboost_bols_bs = mboost::gamboost(formula = formula, data = data, baselearner = "bbs",
+                                control = boost_control(nu = 0.05, mstop = 500, center=FALSE))
+mboost_bols_bs$coef()
+str(mboost_bols_bs)
 
-
-
+?bbs
 
 
 

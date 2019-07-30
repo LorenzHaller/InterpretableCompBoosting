@@ -111,7 +111,7 @@ mboost_bols_bs = mboost::mboost(formula = formula, data = data, baselearner = c(
 mboost_bols_bs$risk()
 
 str(mboost_bs)
-mboost_bs$baselearner$`bbs(Wind)`
+
 mboost_bs$basemodel$`bbs(Wind)`
 mboost_bs$coef()
 

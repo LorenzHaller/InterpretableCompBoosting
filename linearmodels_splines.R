@@ -165,7 +165,7 @@ interpretable_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Ga
       ####################### INTERCEPT #############################
       if(feat == 1){
         # fit new intercept model
-        bl_model <- lm(as.formula(paste(target, bs(1,df=24), sep = " ~ ")), data=data_temp)
+        bl_model <- lm(as.formula(paste(target, bs(1,df=4,knots=20), sep = " ~ ")), data=data_temp)
         # calculate the fit and save it
         spline_fit[1] <- riskfct(y=u, f=bl_model$fitted.values)
         # fill the matrix of all fitted values for all features
@@ -176,7 +176,7 @@ interpretable_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Ga
         
         # Create a formula for the current feature
         feature = eval(colnames(data)[feat])
-        feature_spline = paste("bs(", feature, ",df=24)")
+        feature_spline = paste("bs(", feature, ",df=4,knots=20)")
         formula_temp = as.formula(paste(target, feature_spline, sep = " ~ "))
         formula_temp = terms.formula(formula_temp)
         formula_temp
@@ -190,7 +190,7 @@ interpretable_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Ga
         
         # save the coefficients to the temporary list
         coeff_list_temp[["Intercept"]][feat] <- bl_model$coefficients[1]
-        for (spline_number in 1:24){
+        for (spline_number in 1:5){
           coeff_list_temp[[feature]][spline_number] <- bl_model$coefficients[[spline_number]]
         }
       }
