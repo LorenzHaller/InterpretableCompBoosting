@@ -1,6 +1,6 @@
-# Componentwise boosting using only splines
+# Combine linear models and splines (using mboost code)
 
-splines_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Gaussian(),
+interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=Gaussian(),
                                      epsilon_rel_lin = 0.00001){
   # data: a data frame containing target and features
   # formula: a formula specifying the model
@@ -28,11 +28,11 @@ splines_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Gaussian
   
   
   # Standardize features
-  # if all features are numeric
-  X_scaled <- X
-  X_scaled[,2:dim(X)[2]] <- scale(X)[,2:dim(X)[2]]
-  
-  
+    # if all features are numeric
+    X_scaled <- X
+    X_scaled[,2:dim(X)[2]] <- scale(X)[,2:dim(X)[2]]
+    
+    
   # Initialize with Intercept model (similar to family@offset(y))
   fit_0 <- numeric(dim(X_scaled)[1])
   intercept_model <- lm.fit(x=as.matrix(X_scaled[,1]), y=y)
@@ -64,46 +64,46 @@ splines_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Gaussian
   # Add the intercept to the model coefficients
   lm_coeffs[1] <- intercept_model$coefficients[1]
   
-  # while((iteration <= mstop) & (risk_temp - risk_iter[iteration+1] >= epsilon_lin)){
-  #   
-  #   #Add one to the iteration number
-  #   iteration <- iteration + 1
-  #   
-  #   #Calculate new risk for the current iteration (before updating the fitted values)
-  #   risk_temp <- riskfct(y = y, f = fitted_values)
-  #   
-  #   # Calculate the new negative gradient 
-  #   u <- ngradient(y = y, f = fitted_values)
-  #   
-  #   #Create a temporary coefficients vector
-  #   lm_coeffs_temp = numeric(dim(X_scaled)[2])
-  #   
-  #   # Fit base learners for each feature to the negative gradient
-  #   for(feat in 1:dim(X)[2]){
-  #     # fit linear model for the current feature
-  #     bl_model <- lm.fit(x=as.matrix(X_scaled[,feat]), y=u)
-  #     # calculate the risk
-  #     lm_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
-  #     # save the fitted values
-  #     pred_matrix[,feat] <- bl_model$fitted.values
-  #     # save the current model coefficient
-  #     lm_coeffs_temp[feat] <- bl_model$coefficients
-  #   }
-  #   
-  #   # Choose model with smallest loss
-  #   model_select <- which.min(lm_fit)
-  #   
-  #   # Update model parameters
-  #   lm_coeffs[model_select] <- lm_coeffs[model_select] + nu * lm_coeffs_temp[model_select]
-  #   
-  #   # Create the new fitted values using the features and the coefficients
-  #   fitted_values <- X_scaled %*% lm_coeffs
-  #   
-  #   # Save the risk of the iteration
-  #   risk_iter[iteration+1] <- riskfct(y = y, f = fitted_values)
-  #   
-  # }
-  
+  while((iteration <= mstop) & (risk_temp - risk_iter[iteration+1] >= epsilon_lin)){
+      
+      #Add one to the iteration number
+      iteration <- iteration + 1
+      
+      #Calculate new risk for the current iteration (before updating the fitted values)
+      risk_temp <- riskfct(y = y, f = fitted_values)
+      
+      # Calculate the new negative gradient 
+      u <- ngradient(y = y, f = fitted_values)
+      
+      #Create a temporary coefficients vector
+      lm_coeffs_temp = numeric(dim(X_scaled)[2])
+      
+      # Fit base learners for each feature to the negative gradient
+      for(feat in 1:dim(X)[2]){
+        # fit linear model for the current feature
+        bl_model <- lm.fit(x=as.matrix(X_scaled[,feat]), y=u)
+        # calculate the risk
+        lm_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
+        # save the fitted values
+        pred_matrix[,feat] <- bl_model$fitted.values
+        # save the current model coefficient
+        lm_coeffs_temp[feat] <- bl_model$coefficients
+      }
+      
+      # Choose model with smallest loss
+      model_select <- which.min(lm_fit)
+      
+      # Update model parameters
+      lm_coeffs[model_select] <- lm_coeffs[model_select] + nu * lm_coeffs_temp[model_select]
+      
+      # Create the new fitted values using the features and the coefficients
+      fitted_values <- X_scaled %*% lm_coeffs
+      
+      # Save the risk of the iteration
+      risk_iter[iteration+1] <- riskfct(y = y, f = fitted_values)
+      
+    }
+    
   
   ### Phase 2: Splines
   
@@ -160,51 +160,27 @@ splines_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Gaussian
     # Calculate the new negative gradient 
     u <- ngradient(y = y, f = fitted_values)
     
-    # Fit base learners to the negative gradient
-    for(feat in 1:(dim(data)[2])){
-      ####################### INTERCEPT #############################
-      if(feat == 1){
-        # fit new intercept model
-        bl_model <- lm(as.formula(paste(target, bbs(1), sep = " ~ ")), data=data_temp)
-        # calculate the fit and save it
-        spline_fit[1] <- riskfct(y=u, f=bl_model$fitted.values)
-        # fill the matrix of all fitted values for all features
-        pred_matrix[,1] <- bl_model$fitted.values
-      }
-      ###################### OTHER FEATURES ############################
-      if(feat > 1){
-        
-        # Create a formula for the current feature
-        feature = eval(colnames(data)[feat])
-        feature_spline = paste("bs(", feature, ",df=4,knots=20)")
-        formula_temp = as.formula(paste(target, feature_spline, sep = " ~ "))
-        formula_temp = terms.formula(formula_temp)
-        formula_temp
-        
-        # fit the model
-        bl_model <- lm(formula = formula_temp, data = data_temp)
-        # calculate the fit and save it
-        spline_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
-        # fill the matrix of all fitted values for all features
-        pred_matrix[,feat] <- bl_model$fitted.values
-        
-        # save the coefficients to the temporary list
-        coeff_list_temp[["Intercept"]][feat] <- bl_model$coefficients[1]
-        for (spline_number in 1:5){
-          coeff_list_temp[[feature]][spline_number] <- bl_model$coefficients[[spline_number]]
-        }
-      }
-    }
+    ############################################################################################
+    # Trying to use mboost instead of own spline method
+    data_temp[,target] <- as.numeric(data_temp[,target])
+    mb_spline = mboost::gamboost(formula = formula, data = data_temp, family = family, 
+                                 baselearner = "bbs", control = boost_control(nu = nu, mstop = 1))
     
-    # Choose model with smallest loss
-    model_select <- which.min(spline_fit)
-    feature_select = eval(colnames(data)[model_select])
+    # Extract information from the mboost object
+    # Extracting the spline coefficients
+    mboost_coeff = mb_spline$coef()[[1]]
+    # Extract feature name
+    feature_str = names(mb_spline$coef()[1])
+    feature_str = substring(feature_str, 5)
+    mboost_feature = strsplit(feature_str, ",")[[1]][1]
+    # Extract risk
+    mboost_risk = mb_spline$risk()[2]
     
     # Update model parameters in original coefficients matrix
-    coeff_list[[feature_select]] <- coeff_list[[feature_select]] + nu * coeff_list_temp[[feature_select]]
+    coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + nu * mboost_coeff
     
     # Update the fitted values
-    fitted_values <- fitted_values + nu * pred_matrix[,model_select]
+    fitted_values <- fitted_values + mb_spline$fitted()
     
     # Save the risk of the iteration
     risk_iter[iteration+1] <- riskfct(y = y, f = fitted_values)
@@ -213,7 +189,7 @@ splines_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Gaussian
     data_temp[,target] <- ngradient(y = y, f = fitted_values)
     
   }
-  
+    
   
   # Create a list to return 
   return_list <- list()
@@ -223,6 +199,6 @@ splines_comp_boost <- function(data, formula, nu=0.1, mstop=200, family=Gaussian
   
   # Print the coefficients of the final model
   return(return_list)
-  
-  
+
+
 }
