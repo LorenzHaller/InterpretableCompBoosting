@@ -37,6 +37,12 @@ mboost_bols_bs = mboost::gamboost(formula = formula, data = data, baselearner = 
                                 control = boost_control(nu = 0.1, mstop = 2000))
 #mboost_bols_bs$coef()
 
+# Checking mboost with trees
+mboost_tree = mboost::mboost(formula = formula, data = data, baselearner = "btree",
+                                  control = boost_control(nu = 0.1, mstop = 500))
+mboost_tree$`btree(Solar.R)`
+str(mboost_tree)
+risk()
 
 
 # Plot the risk vs the number of iterations
