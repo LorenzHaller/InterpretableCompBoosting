@@ -30,7 +30,7 @@ micb_500 = interpretable_comp_boost_m(data, formula, nu=0.1, mstop=2000, family=
 # scb_500 = splines_comp_boost(data, formula, nu=0.1, mstop=500, family=Gaussian(),
 #                     epsilon_rel_lin = 0.0001)
 
-
+library(mboost)
 
 # Using mboost with splines
 mboost_bols_bs = mboost::gamboost(formula = formula, data = data, baselearner = "bbs",
