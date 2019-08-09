@@ -16,19 +16,19 @@ source("family.R")
 
 
 # Applying combined method to data
-source("linearmodels_splines.R")
-icb_500 = interpretable_comp_boost(data, formula, nu=0.1, mstop=2000, family=Gaussian(),
-                          epsilon_rel_lin = 0.0001)
+# source("linearmodels_splines.R")
+# icb_500 = interpretable_comp_boost(data, formula, nu=0.1, mstop=2000, family=Gaussian(),
+#                           epsilon_rel_lin = 0.0001)
 
 # Applying combined method to data (MBOOST VERSION)
 source("linearmodels_splines_trees_mboost.R")
 micb_500 = interpretable_comp_boost_m(data, formula, nu=0.1, mstop=2000, family=Gaussian(),
-                                   epsilon_rel_lin = 0.0001)
+                                   epsilon = 0.0005)
 # 
-# Using own method only with splines
-source("compboosting_splines.R")
-scb_500 = splines_comp_boost(data, formula, nu=0.1, mstop=500, family=Gaussian(),
-                    epsilon_rel_lin = 0.00001)
+# # Using own method only with splines
+# source("compboosting_splines.R")
+# scb_500 = splines_comp_boost(data, formula, nu=0.1, mstop=500, family=Gaussian(),
+#                     epsilon_rel_lin = 0.00001)
 
 library(mboost)
 
@@ -65,8 +65,8 @@ points(1:length(mboost_tree$risk()),mboost_tree$risk(),type="l",col="green")
 # points(1:length(micb_500$Risk),micb_500$Risk,col="red",type="l")
 
 # Add a legend to the plot
-legend(100,110000, legend=c("Own method combined", "Own method using only own splines","Own method using MBOOST splines", "Mboost using splines"),
-       col=c("blue", "green","red","black"), lty=1:2, cex=0.8)
+legend(100,110000, legend=c("Own method combined", "Mboost using only own splines","Mboost using trees"),
+       col=c("blue", "darkgreen","green"), lty=1:2, cex=0.8)
 
 
 

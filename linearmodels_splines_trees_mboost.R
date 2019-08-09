@@ -1,7 +1,7 @@
 # Combine linear models and splines (using mboost code)
 
 interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=Gaussian(),
-                                     epsilon_rel_lin = 0.0001){
+                                     epsilon = 0.0005){
   # data: a data frame containing target and features
   # formula: a formula specifying the model
   ## y: the target variable
@@ -9,7 +9,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   # nu: the step size or shrinkage parameter (default = 0.1)
   # mstop: the maximum number of iterations
   # family: the family of the target variable (default = Gaussian)
-  # epsilon_rel_lin: relative epsilon improvement for the linear part
+  # epsilon: necessary relative epsilon improvement for one iteration
   
   
   # Performing checks on the input parameters: formula, data, nu, mstop, family
@@ -39,9 +39,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   fit_0 <- intercept_model$fitted.values
   fitted_values <- fit_0
   
-  # Calculate the risk of the intercept model and set an epsilon for the linear part
+  # Calculate the risk of the intercept model 
   risk_0 <- riskfct(y = y, f = fitted_values)
-  epsilon_lin <- epsilon_rel_lin * risk_0
+
   
   # Initialize the current iteration number
   iteration <- 0
@@ -51,7 +51,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   risk_iter[1] <- risk_0
   
   # Temporary risk
-  risk_temp <- risk_0 + 2*epsilon_lin
+  risk_temp <- risk_0 * 2
   
   ### Phase 1: Linear models as base learners
   
@@ -64,7 +64,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   # Add the intercept to the model coefficients
   lm_coeffs[1] <- intercept_model$coefficients[1]
   
-  while((iteration <= mstop) & (risk_temp - risk_iter[iteration+1] >= epsilon_lin)){
+  while((iteration <= mstop) & ((risk_temp / risk_iter[iteration+1]) >= (1 + epsilon))){
       
       #Add one to the iteration number
       iteration <- iteration + 1
@@ -147,10 +147,10 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   }
   
   # Increase risk_temp to make first spline iteration possible
-  risk_temp <- risk_temp + 2*epsilon_lin
+  risk_temp <- risk_temp * 2
   
   
-  while((iteration <= mstop) & (risk_temp - risk_iter[iteration+1] >= epsilon_lin)){
+  while((iteration <= mstop) & ((risk_temp / risk_iter[iteration+1]) >= (1 + epsilon))){
     
     #Add one to the iteration number
     iteration <- iteration + 1
@@ -197,9 +197,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   
   
   # Increase risk_temp to make first spline iteration possible
-  risk_temp <- risk_temp + 2*epsilon_lin
+  risk_temp <- risk_temp * 2 
   
-  while((iteration <= mstop) & (risk_temp - risk_iter[iteration+1] >= epsilon_lin)){
+  while((iteration <= mstop) & ((risk_temp / risk_iter[iteration+1]) >= (1 + epsilon))){
     
     #Add one to the iteration number
     iteration <- iteration + 1
@@ -213,7 +213,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
     ############################################################################################
     # Trying to use mboost instead of own spline method
     data_temp[,target] <- as.numeric(data_temp[,target])
-    mb_tree = mboost::gamboost(formula = formula, data = data_temp, family = family, 
+    mb_tree = mboost::mboost(formula = formula, data = data_temp, family = family, 
                                  baselearner = "btree", control = boost_control(nu = nu, mstop = 1))
     
     '# Extract information from the mboost object
