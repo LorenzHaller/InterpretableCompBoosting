@@ -41,6 +41,8 @@ library(mboost)
 # Using mboost with splines
 mboost_bols_bs = mboost::gamboost(formula = formula, data = train, baselearner = "bbs",
                                 control = boost_control(nu = 0.1, mstop = 2000))
+mb_bs_predict = mboost_bols_bs$predict(newdata=test)
+risk_mb_bs = riskfct(y = test$Ozone, f = mb_bs_predict)
 #mboost_bols_bs$coef()
 
 # Checking mboost with trees

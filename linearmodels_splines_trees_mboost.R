@@ -116,6 +116,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   ### Phase 2: Splines
   
   library(splines)
+  library(mboost)
   
   # Create a working data set and set target variable
   data_temp <- data
@@ -152,6 +153,8 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   for (cn in 2:length(colnames(X))){
     coeff_list_temp[[colnames(X)[cn]]] = vector(mode = "numeric", length = 24)
   }
+  # Create a list to save the spline mboost object per iteration
+  spline_coefficients <- list()
   
   # Increase risk_temp to make first spline iteration possible
   risk_temp <- risk_temp * 2
@@ -184,6 +187,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
     # Extract risk
     mboost_risk = mb_spline$risk()[2]
     
+    # Save the spline model of this iteration
+    spline_coefficients[[iteration-transition_splines]] <- mb_spline
+    
     # Update model parameters in original coefficients matrix
     coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + nu * mboost_coeff
     
@@ -202,6 +208,8 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   
   ### Phase 3: Trees
   
+  # Create a list to save the mboost tree model in every iteration
+  tree_models <- list()
   
   # Increase risk_temp to make first spline iteration possible
   risk_temp <- risk_temp * 2 
@@ -224,18 +232,21 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
                                  baselearner = "btree", control = boost_control(nu = nu, mstop = 1))
     
     mb_tree$baselearner[[1]]$get_vary
-    '# Extract information from the mboost object
+    # Extract information from the mboost object
     # Extracting the spline coefficients
     mboost_coeff = mb_tree$coef()[[1]]
     # Extract feature name
     feature_str = names(mb_spline$coef()[1])
     feature_str = substring(feature_str, 5)
-    mboost_feature = strsplit(feature_str, ",")[[1]][1]'
+    mboost_feature = strsplit(feature_str, ",")[[1]][1]
     # Extract risk
     mboost_risk = mb_tree$risk()[2]
     
-    '# Update model parameters in original coefficients matrix
-    coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + nu * mboost_coeff'
+    # Update model parameters in original coefficients matrix
+    coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + nu * mboost_coeff
+    
+    # Save tree model to list
+    tree_models[[iteration-transition_trees]] <- mb_tree
     
     # Update the fitted values
     fitted_values <- fitted_values + mb_tree$fitted()
@@ -255,6 +266,8 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   return_list[["Fitted_Values"]] <- fitted_values
   return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees)
   return_list[["Risk"]] <- risk_iter
+  return_list[["Prediction_Models"]] <-c(linear_coefficients,spline_coefficients,tree_models)
+  return_list[["Input_Parameters"]] <-c(nu, mstop, epsilon)
   
   # Print the coefficients of the final model
   return(return_list)
