@@ -2,14 +2,14 @@
 
 interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=Gaussian(),
                                      epsilon = 0.0005){
-  # data: a data frame containing target and features
-  # formula: a formula specifying the model
-  ## y: the target variable
-  ## X: the feature matrix
-  # nu: the step size or shrinkage parameter (default = 0.1)
-  # mstop: the maximum number of iterations
-  # family: the family of the target variable (default = Gaussian)
-  # epsilon: necessary relative epsilon improvement for one iteration
+  # data:     a data frame containing target and features
+  # formula:  a formula specifying the model
+  ## y:       the target variable
+  ## X:       the feature matrix
+  # nu:       the step size or shrinkage parameter (default = 0.1)
+  # mstop:    the maximum number of iterations
+  # family:   the family of the target variable (default = Gaussian)
+  # epsilon:  necessary relative epsilon improvement for one iteration
   
   
   # Performing checks on the input parameters: formula, data, nu, mstop, family
@@ -63,6 +63,8 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   pred_matrix = matrix(0, nrow = dim(X_scaled)[1], ncol = dim(X_scaled)[2])
   # Add the intercept to the model coefficients
   lm_coeffs[1] <- intercept_model$coefficients[1]
+  # Set up a list to save the linear coefficients for each iteration
+  linear_coefficients <- list()
   
   while((iteration <= mstop) & ((risk_temp / risk_iter[iteration+1]) >= (1 + epsilon))){
       
@@ -95,6 +97,11 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
       
       # Update model parameters
       lm_coeffs[model_select] <- lm_coeffs[model_select] + nu * lm_coeffs_temp[model_select]
+      
+      # Save parameter of current iteration to list
+      linear_coefficients[[iteration]] <- vector(mode = "numeric", length = dim(data)[2])
+      names(linear_coefficients[[iteration]]) <- names(lm_coeffs)
+      linear_coefficients[[iteration]][model_select] <- lm_coeffs_temp[model_select]
       
       # Create the new fitted values using the features and the coefficients
       fitted_values <- X_scaled %*% lm_coeffs
@@ -216,6 +223,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
     mb_tree = mboost::mboost(formula = formula, data = data_temp, family = family, 
                                  baselearner = "btree", control = boost_control(nu = nu, mstop = 1))
     
+    mb_tree$baselearner[[1]]$get_vary
     '# Extract information from the mboost object
     # Extracting the spline coefficients
     mboost_coeff = mb_tree$coef()[[1]]

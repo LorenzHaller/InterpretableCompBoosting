@@ -7,6 +7,12 @@ data("airquality")
 attach(airquality)
 data <- na.omit(airquality)
 
+# Split the data in training and test data (75/25 split)
+set.seed(101)
+sample <- sample.int(n = nrow(data), size = floor(.75*nrow(data)), replace = F)
+train <- data[sample, ]
+test  <- data[-sample, ]
+
 # Get model formula and prepare data
 formula <- Ozone ~ Solar.R + Wind + Temp + Month + Day
 formula <- terms.formula(formula)
@@ -22,7 +28,7 @@ source("family.R")
 
 # Applying combined method to data (MBOOST VERSION)
 source("linearmodels_splines_trees_mboost.R")
-micb_500 = interpretable_comp_boost_m(data, formula, nu=0.1, mstop=2000, family=Gaussian(),
+micb_500 = interpretable_comp_boost_m(train, formula, nu=0.1, mstop=2000, family=Gaussian(),
                                    epsilon = 0.0005)
 # 
 # # Using own method only with splines
@@ -33,12 +39,12 @@ micb_500 = interpretable_comp_boost_m(data, formula, nu=0.1, mstop=2000, family=
 library(mboost)
 
 # Using mboost with splines
-mboost_bols_bs = mboost::gamboost(formula = formula, data = data, baselearner = "bbs",
+mboost_bols_bs = mboost::gamboost(formula = formula, data = train, baselearner = "bbs",
                                 control = boost_control(nu = 0.1, mstop = 2000))
 #mboost_bols_bs$coef()
 
 # Checking mboost with trees
-mboost_tree = mboost::mboost(formula = formula, data = data, baselearner = "btree",
+mboost_tree = mboost::mboost(formula = formula, data = train, baselearner = "btree",
                                   control = boost_control(nu = 0.1, mstop = 700))
 mboost_tree$`btree(Solar.R)`
 str(mboost_tree)
