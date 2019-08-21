@@ -268,6 +268,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   return_list[["Risk"]] <- risk_iter
   return_list[["Prediction_Models"]] <-c(linear_coefficients,spline_coefficients,tree_models)
   return_list[["Input_Parameters"]] <-c(nu, mstop, epsilon)
+  return_list[["Riskfunction"]] <- riskfct
   
   # Print the coefficients of the final model
   return(return_list)
