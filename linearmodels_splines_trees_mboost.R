@@ -119,8 +119,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   library(mboost)
   
   # Create a working data set and set target variable
-  data_temp <- data
   target <- all.vars(formula)[1]
+  data_temp <-  as.data.frame(cbind(data[,target],X_scaled[,-1]))
+  colnames(data_temp) <- colnames(data)
   
   # create a vector to save the fit of all features
   spline_fit = numeric(dim(X_scaled)[2])

@@ -45,6 +45,7 @@ icb_predict <- function(icb_object, newdata, target){
     # Multiply the values of the selected feature with its coefficient
     pred_iteration <- X_new[,selected_feature] * icb_object$Prediction_Models[[iteration]][pos_feature]
     
+    
     prediction <- prediction + nu * pred_iteration
     
     # Calculate the risk in this iteration
@@ -65,7 +66,8 @@ icb_predict <- function(icb_object, newdata, target){
     mboost_spline_model <- icb_object$Prediction_Models[[iteration]]
     pred_iteration <- mboost_spline_model$predict(newdata = as.data.frame(X_new))
     
-    prediction <- prediction + nu * pred_iteration
+    prediction <- prediction + pred_iteration
+    
     
     # Calculate the risk in this iteration
     test_risk[iteration+1] <- icb_object$Riskfunction(y = y, f = prediction)
@@ -81,7 +83,8 @@ icb_predict <- function(icb_object, newdata, target){
     mboost_tree_model <- icb_object$Prediction_Models[[iteration]]
     pred_iteration <- mboost_tree_model$predict(newdata = as.data.frame(X_new))
     
-    prediction <- prediction + nu * pred_iteration
+    prediction <- prediction + pred_iteration
+    
     
     # Calculate the risk in this iteration
     test_risk[iteration+1] <- icb_object$Riskfunction(y = y, f = prediction)

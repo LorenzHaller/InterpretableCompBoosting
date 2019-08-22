@@ -41,16 +41,10 @@ library(mboost)
 # Using mboost with splines
 mboost_bols_bs = mboost::gamboost(formula = formula, data = train, baselearner = "bbs",
                                 control = boost_control(nu = 0.1, mstop = 2000))
-mb_bs_predict = mboost_bols_bs$predict(newdata=test)
-risk_mb_bs = riskfct(y = test$Ozone, f = mb_bs_predict)
-#mboost_bols_bs$coef()
 
 # Checking mboost with trees
 mboost_tree = mboost::mboost(formula = formula, data = train, baselearner = "btree",
                                   control = boost_control(nu = 0.1, mstop = 700))
-mboost_tree$`btree(Solar.R)`
-str(mboost_tree)
-risk()
 
 # Compare to gradient boosting from gbt package
 
@@ -63,9 +57,9 @@ risk()
 plot(1:length(micb_500$Risk),micb_500$Risk, xlab="Iteration",ylab="Risk",col="blue",type="l",
      ylim=c(0,120000))
 # Combine to mboost using splines
-points(1:length(mboost_bols_bs$risk()),mboost_bols_bs$risk(),type="l",col="darkgreen")
+points(1:length(mboost_bols_bs$risk()),mboost_bols_bs$risk(),type="l",col="red")
 # Combine to mboost using trees
-points(1:length(mboost_tree$risk()),mboost_tree$risk(),type="l",col="green")
+points(1:length(mboost_tree$risk()),mboost_tree$risk(),type="l",col="orange")
 
 # # Compare to own method using only splines
 # points(1:length(scb_500$Risk),scb_500$Risk,col="green",type="l")
