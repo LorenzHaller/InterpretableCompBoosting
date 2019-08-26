@@ -59,7 +59,7 @@ mb_tree_pred = mboost_tree$predict(test)
 
 ##### VISUALISATION / COMPARISON #########################################################
 
-##### Plot the risk vs the number of iterations
+##### Plot the risk vs the number of iterations 
 
 plot(1:length(micb_500$Risk),avg_risk, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
      ylim=c(0,1000),xlim=c(0,micb_500$Input_Parameters[2]))
@@ -89,7 +89,9 @@ legend(60,1000,
 
 #################################
 
-## Visualize the individual coefficients of the three phases
+## Visualize the feature effects / individual coefficients of the three phases
+
+
 
 ## Linear coefficients
 
