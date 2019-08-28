@@ -44,6 +44,7 @@ pred = icb_predict(icb_object = micb_500, newdata = test, target="Ozone")
 
 avg_risk_test = pred$TestRisk / dim(test)[1]
 
+
 ## MBOOST METHODS #######################################################################
 
 library(mboost)
@@ -96,3 +97,24 @@ legend(60,1000,
 ## Linear coefficients
 
 micb_500$Coefficients$Linear_coefficients
+
+abline(a = micb_500$Coefficients$Linear_coefficients[1], b = micb_500$Coefficients$Linear_coefficients[4])
+## 
+
+class(X_scaled)
+
+# Just plot y and x as comparison
+## scaled feature
+plot(y=y,x=X_scaled[,4])
+abline(a = micb_500$Coefficients$Linear_coefficients[1], b = micb_500$Coefficients$Linear_coefficients[4])
+## original feature
+plot(y=y,x=data$Temp)
+as = micb_500$Coefficients$Linear_coefficients[[1]] * micb_500$`Feature Statistics`[2][4] + micb_500$`Feature Statistics`[1][4]
+bs = micb_500$Coefficients$Linear_coefficients[4] * micb_500$`Feature Statistics`[2][4] 
+abline(a = as, b = bs )
+
+#Bs*Xmean/sdx
+
+library(pdp)
+
+lmtest <- lm(formula=formula, data=data)

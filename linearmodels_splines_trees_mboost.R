@@ -28,6 +28,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   
   
   # Standardize features
+    # Save mean and standard deviation of the features for later
+    X_means <- apply(X, 2, mean)
+    X_stds <- apply(X, 2, sd)
     # if all features are numeric
     X_scaled <- X
     X_scaled[,2:dim(X)[2]] <- scale(X)[,2:dim(X)[2]]
@@ -192,7 +195,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
     spline_coefficients[[iteration-transition_splines]] <- mb_spline
     
     # Update model parameters in original coefficients matrix
-    coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + nu * mboost_coeff
+    coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + mboost_coeff
     
     # Update the fitted values
     fitted_values <- fitted_values + mb_spline$fitted()
@@ -244,7 +247,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
     mboost_risk = mb_tree$risk()[2]
     
     # Update model parameters in original coefficients matrix
-    coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + nu * mboost_coeff
+    coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + mboost_coeff
     
     # Save tree model to list
     tree_models[[iteration-transition_trees]] <- mb_tree
@@ -270,6 +273,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   return_list[["Prediction_Models"]] <-c(linear_coefficients,spline_coefficients,tree_models)
   return_list[["Input_Parameters"]] <-c(nu, mstop, epsilon)
   return_list[["Riskfunction"]] <- riskfct
+  return_list[["Feature Statistics"]] <- c(X_means, X_stds)
   
   # Print the coefficients of the final model
   return(return_list)
