@@ -48,6 +48,10 @@ avg_risk_test = pred$TestRisk / dim(test)[1]
 ## MBOOST METHODS #######################################################################
 
 library(mboost)
+# Mboost with linear terms
+mboost_bols = mboost(formula = formula, data = train, baselearner = "bols",
+                     control = boost_control(nu = nu_bm, mstop = mstop_bm))
+mb_bols_pred = mboost_bols$predict(test)
 # Using mboost with splines
 mboost_bols_bs = mboost::gamboost(formula = formula, data = train, baselearner = "bbs",
                                   control = boost_control(nu = nu_bm, mstop = mstop_bm))
@@ -63,9 +67,13 @@ mb_tree_pred = mboost_tree$predict(test)
 ##### Plot the risk vs the number of iterations 
 
 plot(1:length(micb_500$Risk),avg_risk, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
-     ylim=c(0,1000),xlim=c(0,micb_500$Input_Parameters[2]))
+     ylim=c(0,2000),xlim=c(0,micb_500$Input_Parameters[2]))
 points(1:length(avg_risk_test),avg_risk_test,type="o",col="red")
 
+#Mboost using linear terms
+points(1:length(mboost_bols$risk()),mboost_bols$risk()/dim(train)[1],type="l",col="brown")
+h_pred_bols=micb_500$Riskfunction(y=test$Ozone,f=mb_bols_pred)/dim(test)[1]
+abline(h=h_pred_bols, col="brown")
 # Mboost using splines
 points(1:length(mboost_bols_bs$risk()),mboost_bols_bs$risk()/dim(train)[1],type="l",col="blue")
 h_pred=micb_500$Riskfunction(y=test$Ozone,f=mb_spline_pred)/dim(test)[1]
@@ -76,9 +84,9 @@ h_pred_tree=micb_500$Riskfunction(y=test$Ozone,f=mb_tree_pred)/dim(test)[1]
 abline(h=h_pred_tree, col = "green")
 
 # Add a legend to the plot
-legend(60,1000, 
-       legend=c("Own method", "Mboost using only own splines","Mboost using trees"),
-       col=c("red", "blue","green"), 
+legend(60,1900, 
+       legend=c("Own method", "Mboost using linear elements","Mboost using only own splines","Mboost using trees"),
+       col=c("red", "brown","blue","green"), 
        lty=1:2, 
        cex=0.75)
 

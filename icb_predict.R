@@ -6,15 +6,16 @@ icb_predict <- function(icb_object, newdata, target){
   
   # X <- model.matrix(formula, newdata)
   #X_new <- cbind(1, newdata)
+  X_new <- newdata
   
   if(! is.null(target)){
     y <- newdata[,target]
     #X_new <- newdata[,-target]
     # Scaling for newdata according to scaling for training data
-    X_new <- scale(newdata)
+    X_new_lin <- scale(X_new)
   } else{
     # Scaling for newdata according to scaling for training data
-    X_new <- scale(newdata)
+    X_new_lin <- scale(X_new)
   }
   
   # Create an empty numeric vector for saving the test risk results
@@ -43,7 +44,7 @@ icb_predict <- function(icb_object, newdata, target){
     pos_feature <- which(icb_object$Prediction_Models[[iteration]] != 0)[[1]]
     
     # Multiply the values of the selected feature with its coefficient
-    pred_iteration <- X_new[,selected_feature] * icb_object$Prediction_Models[[iteration]][pos_feature]
+    pred_iteration <- X_new_lin[,selected_feature] * icb_object$Prediction_Models[[iteration]][pos_feature]
     
     
     prediction <- prediction + nu * pred_iteration

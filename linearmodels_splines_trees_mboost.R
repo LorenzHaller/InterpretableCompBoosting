@@ -33,7 +33,8 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
     X_stds <- apply(X, 2, sd)
     # if all features are numeric
     X_scaled <- X
-    X_scaled[,2:dim(X)[2]] <- scale(X)[,2:dim(X)[2]]
+    X_scaled_lin <- X
+    X_scaled_lin[,2:dim(X)[2]] <- scale(X)[,2:dim(X)[2]]
     
     
   # Initialize with Intercept model (similar to family@offset(y))
@@ -85,8 +86,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
       
       # Fit base learners for each feature to the negative gradient
       for(feat in 1:dim(X)[2]){
+
         # fit linear model for the current feature
-        bl_model <- lm.fit(x=as.matrix(X_scaled[,feat]), y=u)
+        bl_model <- lm.fit(x=as.matrix(X_scaled_lin[,feat]), y=u)
         # calculate the risk
         lm_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
         # save the fitted values
@@ -107,7 +109,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
       linear_coefficients[[iteration]][model_select] <- lm_coeffs_temp[model_select]
       
       # Create the new fitted values using the features and the coefficients
-      fitted_values <- X_scaled %*% lm_coeffs
+      fitted_values <- X_scaled_lin %*% lm_coeffs
       
       # Save the risk of the iteration
       risk_iter[iteration+1] <- riskfct(y = y, f = fitted_values)
