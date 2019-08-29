@@ -4,7 +4,8 @@ icb_predict <- function(icb_object, newdata, target){
   # target:         string that can specify the target variable; should be filled if newdata 
                     # contains the target variable -> inner risk will be computed
   
-  # X <- model.matrix(formula, newdata)
+  #formula <- terms.formula(icb_object$Input_Parameters[4])
+  #X <- model.matrix(formula, newdata)
   #X_new <- cbind(1, newdata)
   X_new <- newdata
   
@@ -32,12 +33,12 @@ icb_predict <- function(icb_object, newdata, target){
   test_risk[1] <- icb_object$Riskfunction(y = y, f = prediction)
   
   iteration <- 1
-  nu <- icb_object$Input_Parameters[1]
+  nu <- icb_object$Input_Parameters[[1]]
   
   # For the linear part:
   
   ## Version 1: per iteration
-  while(iteration <= (icb_object$`Transition Iterations`[1]+1)){
+  while(iteration <= (icb_object$`Transition Iterations`[1])){
     
     # Get the name and position of the selected feature
     selected_feature <- names(which(icb_object$Prediction_Models[[iteration]] != 0))
@@ -62,7 +63,7 @@ icb_predict <- function(icb_object, newdata, target){
   
   
   # For the splines part:
-  while(iteration <= (icb_object$`Transition Iterations`[2]+1)){
+  while(iteration <= (icb_object$`Transition Iterations`[2])){
     
     mboost_spline_model <- icb_object$Prediction_Models[[iteration]]
     pred_iteration <- mboost_spline_model$predict(newdata = as.data.frame(X_new))

@@ -16,6 +16,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   
   
   # Preparing the formula and data by seperating the target(y) and the features(X)
+  formula_orig <- formula
   formula <- terms.formula(formula)
   X <- model.matrix(formula, data)
   y <- data[, as.character(formula)[2]]
@@ -71,9 +72,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   linear_coefficients <- list()
   
   # Save parameter of intercept model to list
-  linear_coefficients[[iteration+1]] <- vector(mode = "numeric", length = dim(data)[2])
-  names(linear_coefficients[[iteration+1]]) <- names(lm_coeffs)
-  linear_coefficients[[iteration+1]][1] <- intercept_model$coefficients[1]
+  #linear_coefficients[[iteration+1]] <- vector(mode = "numeric", length = dim(data)[2])
+  #names(linear_coefficients[[iteration+1]]) <- names(lm_coeffs)
+  #linear_coefficients[[iteration+1]][1] <- intercept_model$coefficients[1]
   
   while((iteration <= mstop) & ((risk_temp / risk_iter[iteration+1]) >= (1 + epsilon))){
       
@@ -109,9 +110,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
       lm_coeffs[model_select] <- lm_coeffs[model_select] + nu * lm_coeffs_temp[model_select]
       
       # Save parameter of current iteration to list
-      linear_coefficients[[iteration+1]] <- vector(mode = "numeric", length = dim(data)[2])
-      names(linear_coefficients[[iteration+1]]) <- names(lm_coeffs)
-      linear_coefficients[[iteration+1]][model_select] <- lm_coeffs_temp[model_select]
+      linear_coefficients[[iteration]] <- vector(mode = "numeric", length = dim(data)[2])
+      names(linear_coefficients[[iteration]]) <- names(lm_coeffs)
+      linear_coefficients[[iteration]][model_select] <- lm_coeffs_temp[model_select]
       
       # Create the new fitted values using the features and the coefficients
       fitted_values <- X_scaled_lin %*% lm_coeffs
