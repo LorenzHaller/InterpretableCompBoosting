@@ -12,7 +12,7 @@ attach(airquality)
 data <- na.omit(airquality)
 
 # Split the data in training and test data (75/25 split)
-set.seed(1995)
+set.seed(1998)
 sample <- sample.int(n = nrow(data), size = floor(.66*nrow(data)), replace = F)
 train <- data[sample, ]
 test  <- data[-sample, ]
