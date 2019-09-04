@@ -7,9 +7,10 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
   
   which = as.integer(seq(1,dim(data)[2],by=1))
   
-  icb_object$Coefficients
   
   for(w in which){
+    
+    ylim = NULL
     
     data_temp = data[,w,drop=FALSE]
     feature_name = feature_names[w]
@@ -35,25 +36,20 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     }
     
     
-    prod = basis %*% spline_coefficients[[1]]
+    prod = basis %*% (spline_coefficients[[1]])
+                      #*feature_stdevs[w])
     
-    #pr = icb_object$Coefficients$Intercept + data_temp * rescaled_linear_coefficients + prod
-    pr = data_temp * rescaled_linear_coefficients + prod
-    
-    #plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
-     #     ylab="",xlab=colnames(data_temp)[1])
-    
+    pr = prod
+    #pr = data_temp * rescaled_linear_coefficients + prod
     if (is.null(ylim)) ylim <- range(pr, na.rm = TRUE)
     
+    if(!is.factor(data_temp[[1]])){
+      plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
+           ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
+    
+    }
     
   }
-  
-  
-  
-  
-  
-  
-  
   
   
 }
