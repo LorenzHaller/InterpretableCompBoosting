@@ -74,23 +74,25 @@ for(w in which){
       data <- as.data.frame(data)
   }
   # 
-  plot_helper <- function(xl, yl){
+  #plot_helper <- function(xl, yl){
     # Erstelle predictions die nur einen baselearner (also ein Feature) aus dem Modell verwenden
-    pr <- predict(x, newdata = data, which = w)
-    # Lege einen range für y fest basierend auf den predictions
-    if (is.null(ylim)) ylim <- range(pr, na.rm = TRUE)
-    # Für mehr als zwei Features:
-    if (ncol(data) > 2) {
-      for (v in colnames(data)) {
-        tmp <- data
-        pardep <- sapply(data[[v]], function(vv) {
-          tmp[[v]] <- vv
-          mean(predict(mboost_bols_bs, newdata = tmp, which = w))
-        })
-        if (!userspec.xlab)
-          xl <- v
-        plot(sort(data[[v]]), pardep[order(data[[v]], na.last = NA)],ylim=ylim)
-      }
+  pr <- predict(x, newdata = data, which = w)
+  # Lege einen range für y fest basierend auf den predictions
+  if (is.null(ylim)) ylim <- range(pr, na.rm = TRUE)
+  # Für mehr als zwei Features:
+  if (ncol(data) > 0) {
+    for (v in colnames(data)) {
+      tmp <- data
+      pardep <- sapply(data[[v]], function(vv) {
+        tmp[[v]] <- vv
+        mean(predict(mboost_bols_bs, newdata = tmp, which = w))
+      })
+      if (!userspec.xlab)
+        xl <- v
+      plot(sort(data[[v]]), pardep[order(data[[v]], na.last = NA)],type="b",
+           ylab="",xlab=colnames(data)[1])
     }
   }
+  #}
+  #plot_helper(xl="x",yl="y")
 }

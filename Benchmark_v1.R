@@ -118,7 +118,7 @@ legend(60,1900,
 
 ## Visualize the feature effects / individual coefficients of the three phases
 
-
+plot(mboost_bols_bs)
 
 ## Linear coefficients
 
