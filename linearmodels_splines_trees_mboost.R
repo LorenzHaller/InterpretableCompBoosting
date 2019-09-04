@@ -32,6 +32,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
     # Save mean and standard deviation of the features for later
     X_means <- apply(X, 2, mean)
     X_stds <- apply(X, 2, sd)
+    feature_statistics <- list()
+    feature_statistics[["Means"]] <- X_means
+    feature_statistics[["StdDevs"]] <- X_stds
     # if all features are numeric
     X_scaled <- X
     X_scaled_lin <- X
@@ -280,8 +283,9 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=
   return_list[["Risk"]] <- risk_iter
   return_list[["Prediction_Models"]] <-c(linear_coefficients,spline_coefficients,tree_models)
   return_list[["Input_Parameters"]] <-c(nu, mstop, epsilon)
+  return_list[["Data"]] <- X
   return_list[["Riskfunction"]] <- riskfct
-  return_list[["Feature Statistics"]] <- c(X_means, X_stds)
+  return_list[["Feature Statistics"]] <- feature_statistics
   
   # Print the coefficients of the final model
   return(return_list)

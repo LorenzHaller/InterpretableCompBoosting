@@ -62,6 +62,8 @@ which <- mboost_bols_bs$which(NULL,usedonly = is.null(which))
 userspec.xlab <- FALSE
 xlab <- variable.names(mboost_bols_bs)
 
+seq <- as.integer(seq(1,5,by=1))
+
 w <- 1
 
 for(w in which){
