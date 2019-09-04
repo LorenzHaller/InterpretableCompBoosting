@@ -80,7 +80,7 @@ for(w in which){
     # Erstelle predictions die nur einen baselearner (also ein Feature) aus dem Modell verwenden
   pr <- predict(x, newdata = data, which = w)
   # Lege einen range für y fest basierend auf den predictions
-  if (is.null(ylim)) ylim <- range(pr, na.rm = TRUE)
+  #if (is.null(ylim)) ylim <- range(pr, na.rm = TRUE)
   # Für mehr als zwei Features:
   if (ncol(data) > 0) {
     for (v in colnames(data)) {
