@@ -20,6 +20,7 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, family=Gaussian(),
   formula <- terms.formula(formula)
   X <- model.matrix(formula, data)
   y <- data[, as.character(formula)[2]]
+  target <- all.vars(formula)[1]
   
   
   # # Load the gradient and risk function (using the mboost family.R code)
@@ -96,9 +97,20 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, family=Gaussian(),
   
   ctrl = partykit::ctree_control(maxdepth = 2L)
   
-  mb_spline = mboost::gamboost(formula = formula, data = data, family = family, 
-                               offset = fitted_values, baselearner = "bbs", 
-                               control = boost_control(nu = nu, mstop = 1))
+  feature_list = attr(formula, "variables")
+  strsplit(as.character(feature_list), ",")
+  
+  # Extract feature name
+  feature_str = names(mb_spline$coef()[1])
+  feature_str = substring(feature_str, 5)
+  mboost_feature = strsplit(feature_str, ",")[[1]][1]
+  
+  
+  
+  mb_tree = mboost(Ozone ~ btree(Solar.R, Wind, Temp, Month, Day, 
+                                     tree_controls = ctrl), 
+                     data = data, family = family, offset = fitted_values, 
+                     control = boost_control(nu = nu, mstop = 1))
   
    
   
