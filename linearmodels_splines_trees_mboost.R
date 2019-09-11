@@ -1,7 +1,7 @@
 # Combine linear models and splines (using mboost code)
 
-interpretable_comp_boost_m <- function(data, formula, nu=0.1, family=Gaussian(),
-                                     epsilon = 0.0025){
+interpretable_comp_boost_m <- function(data, formula, nu=0.1, mstop=200, family=Gaussian(),
+                                     epsilon = 0.0005){
   # data:     a data frame containing target and features
   # formula:  a formula specifying the model
   ## y:       the target variable
@@ -26,81 +26,208 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, family=Gaussian(),
   source("family.R")
   ngradient <- family@ngradient
   riskfct <- family@risk
+  
+  
+  # Standardize features
+    # Save mean and standard deviation of the features for later
+    X_means <- apply(X, 2, mean)
+    X_stds <- apply(X, 2, sd)
+    feature_statistics <- list()
+    feature_statistics[["Means"]] <- X_means
+    feature_statistics[["StdDevs"]] <- X_stds
+    # if all features are numeric
+    X_scaled <- X
+    X_scaled_lin <- X
+    X_scaled_lin[,2:dim(X)[2]] <- scale(X)[,2:dim(X)[2]]
     
     
   # Initialize with Intercept model (similar to family@offset(y))
-  intercept_model <- lm.fit(x=as.matrix(X[,1]), y=y)
+  fit_0 <- numeric(dim(X_scaled)[1])
+  intercept_model <- lm.fit(x=as.matrix(X_scaled[,1]), y=y)
   fit_0 <- intercept_model$fitted.values
   fitted_values <- fit_0
   
   # Calculate the risk of the intercept model 
   risk_0 <- riskfct(y = y, f = fitted_values)
+
   
+  # Initialize the current iteration number
+  iteration <- 0
   
+  # Initialize a vector to save the risk values
+  risk_iter <- numeric()
+  risk_iter[1] <- risk_0
+  
+  # Temporary risk
+  risk_temp <- risk_0 * 2
   
   ### Phase 1: Linear models as base learners
   
-  # Initialize the current iteration number
-  iteration <- 1
+  # Set up vectors for the fit and the coefficients
+  lm_fit = numeric(dim(X_scaled)[2])
+  lm_coeffs = numeric(dim(X_scaled)[2])
+  names(lm_coeffs) <- names(lm_fit) <- colnames(X_scaled)
+  # Set up a matrix for all the fitted values (one column for each feature)
+  pred_matrix = matrix(0, nrow = dim(X_scaled)[1], ncol = dim(X_scaled)[2])
+  # Add the intercept to the model coefficients
+  lm_coeffs[1] <- intercept_model$coefficients[1]
+  # Set up a list to save the linear coefficients for each iteration
+  linear_coefficients <- list()
   
-  # Start with an initial mboost iteration
-  mb_linear <- mboost::mboost(formula = formula, data = data, family = family, offset = fitted_values,
-                             baselearner = "bols", control = boost_control(nu = nu, mstop = 1))
+  # Save parameter of intercept model to list
+  #linear_coefficients[[iteration+1]] <- vector(mode = "numeric", length = dim(data)[2])
+  #names(linear_coefficients[[iteration+1]]) <- names(lm_coeffs)
+  #linear_coefficients[[iteration+1]][1] <- intercept_model$coefficients[1]
   
-  while((mb_linear$risk()[iteration] / mb_linear$risk()[iteration+1]) >= (1 + epsilon)){
+  while((iteration <= mstop) & ((risk_temp / risk_iter[iteration+1]) >= (1 + epsilon))){
       
       #Add one to the iteration number
       iteration <- iteration + 1
       
-      # Create next iteration 
-      mb_linear <- mb_linear[iteration]
+      #Calculate new risk for the current iteration (before updating the fitted values)
+      risk_temp <- riskfct(y = y, f = fitted_values)
+      
+      # Calculate the new negative gradient 
+      u <- ngradient(y = y, f = fitted_values)
+      
+      #Create a temporary coefficients vector
+      lm_coeffs_temp = numeric(dim(X_scaled)[2])
+      
+      # Fit base learners for each feature to the negative gradient
+      for(feat in 1:dim(X)[2]){
+
+        # fit linear model for the current feature
+        bl_model <- lm.fit(x=as.matrix(X_scaled_lin[,feat]), y=u)
+        # calculate the risk
+        lm_fit[feat] <- riskfct(y=u, f=bl_model$fitted.values)
+        # save the fitted values
+        pred_matrix[,feat] <- bl_model$fitted.values
+        # save the current model coefficient
+        lm_coeffs_temp[feat] <- bl_model$coefficients
+      }
+      
+      # Choose model with smallest loss
+      model_select <- which.min(lm_fit)
+      
+      # Update model parameters
+      lm_coeffs[model_select] <- lm_coeffs[model_select] + nu * lm_coeffs_temp[model_select]
+      
+      # Save parameter of current iteration to list
+      linear_coefficients[[iteration]] <- vector(mode = "numeric", length = dim(data)[2])
+      names(linear_coefficients[[iteration]]) <- names(lm_coeffs)
+      linear_coefficients[[iteration]][model_select] <- lm_coeffs_temp[model_select]
+      
+      # Create the new fitted values using the features and the coefficients
+      fitted_values <- X_scaled_lin %*% lm_coeffs
+      
+      # Save the risk of the iteration
+      risk_iter[iteration+1] <- riskfct(y = y, f = fitted_values)
       
     }
     
   transition_splines <- iteration
   
-  # Save fitted values of the last linear model iteration to use them as offset
-  fitted_values <- mb_linear$fitted()
-  
-  
-  
   ### Phase 2: Splines
   
-  iteration <- iteration + 1 
+  library(splines)
+  library(mboost)
   
-  mb_spline = mboost::gamboost(formula = formula, data = data, family = family, 
-                               offset = fitted_values, baselearner = "bbs", 
-                               control = boost_control(nu = nu, mstop = 1))
+  # Create a working data set and set target variable
+  target <- all.vars(formula)[1]
+  data_temp <-  as.data.frame(cbind(data[,target],X_scaled[,-1]))
+  colnames(data_temp) <- colnames(data)
+  
+  # create a vector to save the fit of all features
+  spline_fit = numeric(dim(X_scaled)[2])
+  names(spline_fit) <- colnames(X_scaled)
+  
+  # Create a list with the coefficients for all the features
+  # as it is necessary for the splines.
+  # The list consists of multiple vectors of length 24 (for the splines)
+  coeff_list <- list()
+  
+  # Add the intercept from the linear model part
+  coeff_list[["Intercept"]] <- lm_coeffs[1]
+  names(coeff_list[["Intercept"]]) <- colnames(X_scaled)[1]
+  
+  # Add the linear coefficients from the first phase
+  coeff_list[["Linear_coefficients"]] <- lm_coeffs
+  
+  # Add vectors of length 24 for all other features
+  for (cn in 2:length(colnames(X))){
+    coeff_list[[colnames(X)[cn]]] = vector(mode = "numeric", length = 24)
+  }
+  
+  # Calculate the negative gradient and update the data frame
+  data_temp[,target] <- ngradient(y = y, f = fitted_values)
+  
+  # Create a list for the temporary results 
+  coeff_list_temp <- list()
+  coeff_list_temp[["Intercept"]] <- vector(mode = "numeric", length = dim(X)[2])
+  names(coeff_list_temp[["Intercept"]]) <- colnames(X_scaled)
+  for (cn in 2:length(colnames(X))){
+    coeff_list_temp[[colnames(X)[cn]]] = vector(mode = "numeric", length = 24)
+  }
+  # Create a list to save the spline mboost object per iteration
+  spline_coefficients <- list()
+  
+  # Increase risk_temp to make first spline iteration possible
+  risk_temp <- risk_temp * 2
   
   
-  while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
+  while((iteration <= mstop) & ((risk_temp / risk_iter[iteration+1]) >= (1 + epsilon))){
     
     #Add one to the iteration number
     iteration <- iteration + 1
     
-    # Create next iteration
-    mb_spline <- mb_spline[iteration - transition_splines]
+    #Calculate new risk for the current iteration (before updating the fitted values)
+    risk_temp <- riskfct(y = y, f = fitted_values)
+    
+    # Calculate the new negative gradient 
+    u <- ngradient(y = y, f = fitted_values)
+    
+    ############################################################################################
+    # Trying to use mboost instead of own spline method
+    data_temp[,target] <- as.numeric(data_temp[,target])
+    mb_spline = mboost::gamboost(formula = formula, data = data_temp, family = family, 
+                                 baselearner = "bbs", control = boost_control(nu = nu, mstop = 1))
+    
+    # Extract information from the mboost object
+    # Extracting the spline coefficients
+    mboost_coeff = mb_spline$coef()[[1]]
+    # Extract feature name
+    feature_str = names(mb_spline$coef()[1])
+    feature_str = substring(feature_str, 5)
+    mboost_feature = strsplit(feature_str, ",")[[1]][1]
+    # Extract risk
+    mboost_risk = mb_spline$risk()[2]
+    
+    # Save the spline model of this iteration
+    spline_coefficients[[iteration-transition_splines]] <- mb_spline
+    
+    # Update model parameters in original coefficients matrix
+    coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + mboost_coeff
+    
+    # Update the fitted values
+    fitted_values <- fitted_values + mb_spline$fitted()
+    
+    # Save the risk of the iteration
+    risk_iter[iteration+1] <- riskfct(y = y, f = fitted_values)
+    
+    # Calculate the negative gradient and update the data frame
+    data_temp[,target] <- ngradient(y = y, f = fitted_values)
     
   }
   
   transition_trees <- iteration
   
-  # Save fitted values of the last linear model iteration to use them as offset
-  fitted_values <- mb_spline$fitted()
-  
-  
-  
   ### Phase 3: Trees
   
-  iteration <- iteration + 1 
+  # Create a list to save the mboost tree model in every iteration
+  tree_models <- list()
   
-  ctrl = partykit::ctree_control(maxdepth = 2L)
-  
-  mb_spline = mboost::gamboost(formula = formula, data = data, family = family, 
-                               offset = fitted_values, baselearner = "bbs", 
-                               control = boost_control(nu = nu, mstop = 1))
-  
-   
+  # Increase risk_temp to make first spline iteration possible
+  risk_temp <- risk_temp * 2 
   
   while((iteration <= mstop) & ((risk_temp / risk_iter[iteration+1]) >= (1 + epsilon))){
     
