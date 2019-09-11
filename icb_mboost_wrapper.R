@@ -97,80 +97,39 @@ interpretable_comp_boost_m <- function(data, formula, nu=0.1, family=Gaussian(),
   
   ctrl = partykit::ctree_control(maxdepth = 2L)
   
-  feature_list = attr(formula, "variables")
-  strsplit(as.character(feature_list), ",")
   
   # Extract feature name
-  feature_str = names(mb_spline$coef()[1])
-  feature_str = substring(feature_str, 5)
-  mboost_feature = strsplit(feature_str, ",")[[1]][1]
+  feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
   
+  # Create formula for applying btree
+  tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
+  tree_formula <- as.formula(tree_formula)
   
-  
-  mb_tree = mboost(Ozone ~ btree(Solar.R, Wind, Temp, Month, Day, 
-                                     tree_controls = ctrl), 
+  mb_tree = mboost(formula = tree_formula, 
                      data = data, family = family, offset = fitted_values, 
                      control = boost_control(nu = nu, mstop = 1))
   
-   
   
-  while((iteration <= mstop) & ((risk_temp / risk_iter[iteration+1]) >= (1 + epsilon))){
+  while((mb_tree$risk()[iteration-transition_trees] / mb_tree$risk()[iteration-transition_trees+1]) >= (1 + epsilon)){
     
     #Add one to the iteration number
     iteration <- iteration + 1
     
-    #Calculate new risk for the current iteration (before updating the fitted values)
-    risk_temp <- riskfct(y = y, f = fitted_values)
-    
-    # Calculate the new negative gradient 
-    u <- ngradient(y = y, f = fitted_values)
-    
-    ############################################################################################
-    # Trying to use mboost instead of own spline method
-    data_temp[,target] <- as.numeric(data_temp[,target])
-    mb_tree = mboost::mboost(formula = formula, data = data_temp, family = family, 
-                                 baselearner = "btree", control = boost_control(nu = nu, mstop = 1))
-    
-    mb_tree$baselearner[[1]]$get_vary
-    # Extract information from the mboost object
-    # Extracting the spline coefficients
-    mboost_coeff = mb_tree$coef()[[1]]
-    # Extract feature name
-    feature_str = names(mb_spline$coef()[1])
-    feature_str = substring(feature_str, 5)
-    mboost_feature = strsplit(feature_str, ",")[[1]][1]
-    # Extract risk
-    mboost_risk = mb_tree$risk()[2]
-    
-    # Update model parameters in original coefficients matrix
-    coeff_list[[mboost_feature]] <- coeff_list[[mboost_feature]] + mboost_coeff
-    
-    # Save tree model to list
-    tree_models[[iteration-transition_trees]] <- mb_tree
-    
-    # Update the fitted values
-    fitted_values <- fitted_values + mb_tree$fitted()
-    
-    # Save the risk of the iteration
-    risk_iter[iteration+1] <- riskfct(y = y, f = fitted_values)
-    
-    # Calculate the negative gradient and update the data frame
-    data_temp[,target] <- ngradient(y = y, f = fitted_values)
+    mb_tree <- mb_tree[iteration - transition_trees]
     
   }
   
   
   ### Create a list to return 
   return_list <- list()
-  return_list[["Coefficients"]] <- coeff_list
-  return_list[["Fitted_Values"]] <- fitted_values
+  return_list[["Coefficients"]] <- c(mb_linear$coef(), mb_spline$coef())
+  return_list[["Fitted_Values"]] <- mb_tree$fitted()
   return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees)
-  return_list[["Risk"]] <- risk_iter
-  return_list[["Prediction_Models"]] <-c(linear_coefficients,spline_coefficients,tree_models)
-  return_list[["Input_Parameters"]] <-c(nu, mstop, epsilon)
+  return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk(),mb_tree$risk())
+  return_list[["Prediction_Models"]] <-c(mb_linear,mb_spline,mb_tree)
+  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon)
   return_list[["Data"]] <- X
   return_list[["Riskfunction"]] <- riskfct
-  return_list[["Feature Statistics"]] <- feature_statistics
   
   # Print the coefficients of the final model
   return(return_list)
