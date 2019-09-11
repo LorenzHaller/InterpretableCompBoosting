@@ -1,6 +1,6 @@
 # Combine linear models and splines (using mboost code)
 
-interpretable_comp_boost_m <- function(data, formula, nu=0.1, family=Gaussian(),
+interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gaussian(),
                                      epsilon = 0.0025){
   # data:     a data frame containing target and features
   # formula:  a formula specifying the model

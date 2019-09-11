@@ -27,7 +27,7 @@ source("family.R")
 
 ### SET PARAMETERS ###################################################################
 
-mstop_bm = 200
+mstop_bm = 300
 nu_bm = 0.05
 
 
@@ -38,6 +38,13 @@ source("linearmodels_splines_trees_mboost.R")
 micb_500 = interpretable_comp_boost_m(train, formula, nu=nu_bm, mstop=mstop_bm, 
                                       family=Gaussian(),epsilon = 0.0025)
 avg_risk = micb_500$Risk / dim(train)[1]
+
+### OWN METHOD MBOOST WRAPPER
+source("icb_mboost_wrapper.R")
+micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=nu_bm, 
+                                            family=Gaussian(),epsilon = 0.001)
+avg_risk_wrapper = micb_wrapper$Risk / dim(train)[1]
+
 # Make predictions
 source("icb_predict.R")
 pred = icb_predict(icb_object = micb_500, newdata = test, target="Ozone")
@@ -66,10 +73,10 @@ mb_tree_pred = mboost_tree$predict(test)
 
 ##### Plot the risk vs the number of iterations 
 
-plot(1:length(micb_500$Risk),avg_risk, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
-     ylim=c(0,2000),xlim=c(0,micb_500$Input_Parameters[2]),main="Own method vs mboost with different base learners")
-abline(v = micb_500$`Transition Iterations`[1])
-abline(v = micb_500$`Transition Iterations`[2])
+plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
+     ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[2]),main="Own method vs mboost with different base learners")
+abline(v = micb_wrapper$`Transition Iterations`[1])
+abline(v = micb_wrapper$`Transition Iterations`[2])
 #points(1:length(avg_risk_test),avg_risk_test,type="o",col="red")
 
 #Mboost using linear terms
