@@ -39,6 +39,12 @@ micb_500 = interpretable_comp_boost_m(train, formula, nu=nu_bm, mstop=mstop_bm,
                                       family=Gaussian(),epsilon = 0.0025)
 avg_risk = micb_500$Risk / dim(train)[1]
 
+# Make predictions
+source("icb_predict.R")
+pred = icb_predict(icb_object = micb_500, newdata = test, target="Ozone")
+
+avg_risk_test = pred$TestRisk / dim(test)[1]
+
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=nu_bm, 
@@ -46,10 +52,10 @@ micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=nu_bm,
 avg_risk_wrapper = micb_wrapper$Risk / dim(train)[1]
 
 # Make predictions
-source("icb_predict.R")
-pred = icb_predict(icb_object = micb_500, newdata = test, target="Ozone")
+source("icb_predict_wrapper.R")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
+avg_risk_test = pred$TestRisk
 
-avg_risk_test = pred$TestRisk / dim(test)[1]
 
 
 ## MBOOST METHODS #######################################################################
@@ -77,7 +83,7 @@ plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Averag
      ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[2]),main="Own method vs mboost with different base learners")
 abline(v = micb_wrapper$`Transition Iterations`[1])
 abline(v = micb_wrapper$`Transition Iterations`[2])
-#points(1:length(avg_risk_test),avg_risk_test,type="o",col="red")
+points(1:length(avg_risk_test),avg_risk_test,type="p",col="red")
 
 #Mboost using linear terms
 points(1:length(mboost_bols$risk()),mboost_bols$risk()/dim(train)[1],type="l",col="brown")

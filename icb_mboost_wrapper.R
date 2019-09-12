@@ -45,7 +45,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gauss
   iteration <- 1
   
   # Start with an initial mboost iteration
-  mb_linear <- mboost::mboost(formula = formula, data = data, family = family, offset = fitted_values,
+  mb_linear <- mboost::mboost(formula = formula, data = data, family = family, offset = fit_0,
                              baselearner = "bols", control = boost_control(nu = nu, mstop = 1))
   
   while((mb_linear$risk()[iteration] / mb_linear$risk()[iteration+1]) >= (1 + epsilon)){
@@ -63,14 +63,20 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gauss
   # Save fitted values of the last linear model iteration to use them as offset
   fitted_values <- mb_linear$fitted()
   
+  # Calculate the residuals after the linear phase
+  u_lin <- ngradient(y = y, f = fitted_values)
+  
+  # Update the data with the gradient as new 'y'
+  data_temp <- data
+  data_temp[,target] <- u_lin
   
   
   ### Phase 2: Splines
   
   iteration <- iteration + 1 
   
-  mb_spline = mboost::gamboost(formula = formula, data = data, family = family, 
-                               offset = fitted_values, baselearner = "bbs", 
+  mb_spline = mboost::gamboost(formula = formula, data = data_temp, family = family,
+                               baselearner = "bbs", 
                                control = boost_control(nu = nu, mstop = 1))
   
   
@@ -87,8 +93,13 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gauss
   transition_trees <- iteration
   
   # Save fitted values of the last linear model iteration to use them as offset
-  fitted_values <- mb_spline$fitted()
+  fitted_values <- fitted_values + mb_spline$fitted()
   
+  # Calculate the residuals after the linear phase
+  u_spline <- ngradient(y = y, f = fitted_values)
+  
+  # Update the data with the gradient as new 'y'
+  data_temp[,target] <- u_spline
   
   
   ### Phase 3: Trees
@@ -106,7 +117,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gauss
   tree_formula <- as.formula(tree_formula)
   
   mb_tree = mboost(formula = tree_formula, 
-                     data = data, family = family, offset = fitted_values, 
+                     data = data_temp, family = family, 
                      control = boost_control(nu = nu, mstop = 1))
   
   
@@ -120,13 +131,22 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gauss
   }
   
   
+  fitted_values <- fitted_values + mb_tree$fitted()
+  
+  
+  ### Create list for models of all three phases
+  Prediction_Models <- list()
+  Prediction_Models[["Linear"]] <- mb_linear
+  Prediction_Models[["Spline"]] <- mb_spline
+  Prediction_Models[["Tree"]] <- mb_tree
+  
   ### Create a list to return 
   return_list <- list()
   return_list[["Coefficients"]] <- c(mb_linear$coef(), mb_spline$coef())
-  return_list[["Fitted_Values"]] <- mb_tree$fitted()
+  return_list[["Fitted_Values"]] <- fitted_values
   return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees)
   return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk(),mb_tree$risk())
-  return_list[["Prediction_Models"]] <-c(mb_linear,mb_spline,mb_tree)
+  return_list[["Prediction_Models"]] <- Prediction_Models
   return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon)
   return_list[["Data"]] <- X
   return_list[["Riskfunction"]] <- riskfct
