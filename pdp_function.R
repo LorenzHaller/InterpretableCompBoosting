@@ -34,7 +34,7 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     
     
     
-    prod = basis %*% spline_coefficients[[1]]
+    prod = basis %*% spline_coefficients[[1]] + intercept + slope * data_temp[,1]
                  
     
     pr = prod
