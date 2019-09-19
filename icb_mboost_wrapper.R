@@ -38,6 +38,8 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     family = Gaussian()
   } else if(target_class == "Binomial"){
     family = Binomial()
+  } else{
+    stop("No correct family for target!")
   }
   ngradient <- family@ngradient
   riskfct <- family@risk
