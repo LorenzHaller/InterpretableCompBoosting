@@ -1,6 +1,6 @@
 # Combine linear models and splines (using mboost code)
 
-interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gaussian(),
+interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class="Gaussian",
                                      epsilon = 0.0025){
   # data:     a data frame containing target and features
   # formula:  a formula specifying the model
@@ -16,26 +16,46 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gauss
   
   
   # Preparing the formula and data by seperating the target(y) and the features(X)
+  data <- na.omit(data)
   formula_orig <- formula
   formula <- terms.formula(formula)
   X <- model.matrix(formula, data)
-  y <- data[, as.character(formula)[2]]
   target <- all.vars(formula)[1]
+  
+  if(target_class=="Binomial"){
+    data[,target] <- as.factor(data[,target])
+    y <- data[, target]
+    y_int <- (c(-1, 1)[as.integer(y)])
+  } else{
+    y <- data[, target]
+    y_int <- y
+  }
+  
   
   
   # # Load the gradient and risk function (using the mboost family.R code)
-  source("family.R")
+  if(target_class == "Gaussian"){
+    family = Gaussian()
+  } else if(target_class == "Binomial"){
+    family = Binomial()
+  }
   ngradient <- family@ngradient
   riskfct <- family@risk
     
     
   # Initialize with Intercept model (similar to family@offset(y))
-  intercept_model <- lm.fit(x=as.matrix(X[,1]), y=y)
-  fit_0 <- intercept_model$fitted.values
-  fitted_values <- fit_0
+  if(target_class == "Binomial"){
+    intercept_model <- glm.fit(x=as.matrix(X[,1]), y=y, family = binomial(link = "logit"))
+    fit_0 <- intercept_model$fitted.values
+    fitted_values <- fit_0
+  } else{
+    intercept_model <- lm.fit(x=as.matrix(X[,1]), y=y)
+    fit_0 <- intercept_model$fitted.values
+    fitted_values <- fit_0
+  }
   
   # Calculate the risk of the intercept model 
-  risk_0 <- riskfct(y = y, f = fitted_values)
+  risk_0 <- riskfct(y = y_int, f = fitted_values)
   
   
   
@@ -63,8 +83,11 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gauss
   # Save fitted values of the last linear model iteration to use them as offset
   fitted_values <- mb_linear$fitted()
   
+  # f <- pmin(abs(fitted_values), 36) * sign(fitted_values)
+  # (fitted_values > 0) + 1
+  
   # Calculate the residuals after the linear phase
-  u_lin <- ngradient(y = y, f = fitted_values)
+  u_lin <- ngradient(y = y_int, f = fitted_values)
   
   # Update the data with the gradient as new 'y'
   data_temp <- data
@@ -96,7 +119,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, family=Gauss
   fitted_values <- fitted_values + mb_spline$fitted()
   
   # Calculate the residuals after the linear phase
-  u_spline <- ngradient(y = y, f = fitted_values)
+  u_spline <- ngradient(y = y_int, f = fitted_values)
   
   # Update the data with the gradient as new 'y'
   data_temp[,target] <- u_spline
