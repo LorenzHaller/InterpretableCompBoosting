@@ -1,7 +1,7 @@
 # Combine linear models and splines (using mboost code)
 
 interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class="Gaussian",
-                                     epsilon = 0.0025){
+                                     epsilon = 0.0025, bl2=c("bbs","btree")){
   # data:     a data frame containing target and features
   # formula:  a formula specifying the model
   ## y:       the target variable
@@ -59,7 +59,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   # Calculate the risk of the intercept model 
   risk_0 <- riskfct(y = y_int, f = fitted_values)
   
-  
+  ngradient(y = y_int, f = fit_0)
   
   ### Phase 1: Linear models as base learners
   
@@ -88,32 +88,61 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   # f <- pmin(abs(fitted_values), 36) * sign(fitted_values)
   # (fitted_values > 0) + 1
   
-  # Calculate the residuals after the linear phase
-  u_lin <- ngradient(y = y_int, f = fitted_values)
-  
-  # Update the data with the gradient as new 'y'
-  data_temp <- data
-  data_temp[,target] <- u_lin
   
   
-  ### Phase 2: Splines
   
-  iteration <- iteration + 1 
+  ### Phase 2: Splines or Tree stumps
   
-  mb_spline = mboost::gamboost(formula = formula, data = data_temp, family = family,
-                               baselearner = "bbs", 
-                               control = boost_control(nu = nu, mstop = 1))
-  
-  
-  while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
+  if(target_class=="Binomial"){
     
-    #Add one to the iteration number
-    iteration <- iteration + 1
+    # Calculate the residuals after the linear phase
+    u_lin <- ngradient(y = y_int, f = fitted_values)
     
-    # Create next iteration
-    mb_spline <- mb_spline[iteration - transition_splines]
+    # Update the data with the gradient as new 'y'
+    data_temp <- data
+    data_temp[,target] <- as.numeric(data_temp[,target]) - abs(u_lin)
     
-  }
+    iteration <- iteration + 1 
+    
+    mb_spline = mboost::mboost(formula = formula, data = data_temp, family = Gaussian(),
+                                 baselearner = "btree", 
+                                 control = boost_control(nu = nu, mstop = 1))
+    
+    
+    while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
+      
+      #Add one to the iteration number
+      iteration <- iteration + 1
+      
+      # Create next iteration
+      mb_spline <- mb_spline[iteration - transition_splines]
+      
+    }
+  }else if(target_class=="Gaussian"){
+      
+      # Calculate the residuals after the linear phase
+      u_lin <- ngradient(y = y_int, f = fitted_values)
+      
+      # Update the data with the gradient as new 'y'
+      data_temp <- data
+      data_temp[,target] <- u_lin
+    
+      iteration <- iteration + 1 
+      
+      mb_spline = mboost::mboost(formula = formula, data = data_temp, family = family,
+                                   baselearner = bl2, 
+                                   control = boost_control(nu = nu, mstop = 1))
+      
+      
+      while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
+        
+        #Add one to the iteration number
+        iteration <- iteration + 1
+        
+        # Create next iteration
+        mb_spline <- mb_spline[iteration - transition_splines]
+      }
+    }    
   
   transition_trees <- iteration
   

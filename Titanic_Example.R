@@ -21,6 +21,18 @@ class(titanic_train$Survived)
 source("family.R")
 
 
+### OWN METHOD MBOOST WRAPPER
+source("icb_mboost_wrapper.R")
+micb_wrapper = interpretable_comp_boost_wrapper(titanic_train, formula, nu=0.1, 
+                                                target_class="Binomial",epsilon = 0.001)
+avg_risk_wrapper = micb_wrapper$Risk / dim(titanic_train)[1]
+
+# Make predictions
+source("icb_predict_wrapper.R")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = titanic_test, target="Ozone")
+avg_risk_test = pred$TestRisk
+
+
 
 
 ### OWN METHOD MBOOST WRAPPER
