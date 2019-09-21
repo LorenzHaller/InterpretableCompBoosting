@@ -13,7 +13,7 @@ data <- na.omit(data)
 
 # Modellformel und Aufbereitung Daten
 
-formula <- Survived ~ Pclass + Sex + Age + Fare
+formula <- Survived ~ Pclass + Age + Fare
 #formula <- terms.formula(formula)
 
 class(titanic_train$Survived)
