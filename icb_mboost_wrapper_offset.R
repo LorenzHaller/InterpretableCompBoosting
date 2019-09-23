@@ -66,10 +66,24 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     fitted_values <- fit_0
   }
   
-  # Calculate the risk of the intercept model 
+  # Calculate the risk of the intercept model
+  # if(target_class == "Binomial"){
+  #   predicted_train_labels <- numeric(length(fitted_values))
+  #   for(lp in 1:length(predicted_train_labels)){
+  #     if(fitted_values[lp] < 0){
+  #       predicted_train_labels[lp] <- 0
+  #     } else{
+  #       predicted_train_labels[lp] <- 1
+  #     }
+  #   }
+  #   risk_0_labels <- riskfct(y = y_int, f = predicted_train_labels)
+  # }
+  
   risk_0 <- riskfct(y = y_int, f = fitted_values)
   
-  
+  # Initialize a vector to save the risk values for the labels
+  # risk_iter <- numeric()
+  # risk_iter[1] <- risk_0_labels
   
   ### Phase 1: Linear models as base learners
   
@@ -87,6 +101,16 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
       
       # Create next iteration 
       mb_linear <- mb_linear[iteration]
+      # 
+      # if(target_class == "Binomial"){
+      #   for(lp in 1:length(predicted_labels)){
+      #     if(fitted_values[lp] < 0){
+      #       predicted_train_labels[lp] <- 0
+      #     } else{
+      #       predicted_train_labels[lp] <- 1
+      #     }
+      #   }
+      # }
       
     }
     
@@ -181,7 +205,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   }
   
   
-  fitted_values <- fitted_values + mb_tree$fitted()
+  fitted_values <- mb_tree$fitted()
   
   
   ### Create list for models of all three phases

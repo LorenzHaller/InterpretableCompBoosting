@@ -21,8 +21,8 @@ class(titanic_train$Survived)
 source("family.R")
 
 # Split the data in training and test data (75/25 split)
-set.seed(1995)
-sample <- sample.int(n = nrow(data), size = floor(.75*nrow(data)), replace = F)
+set.seed(2995)
+sample <- sample.int(n = nrow(data), size = floor(.5*nrow(data)), replace = F)
 train <- data[sample, ]
 test  <- data[-sample, ]
 
@@ -31,10 +31,10 @@ test  <- data[-sample, ]
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
                                                 target_class="Binomial",epsilon = 0.001)
-avg_risk_wrapper = micb_wrapper$Risk / dim(titanic_train)[1]
+avg_risk_wrapper = micb_wrapper$Risk / dim(na.omit(titanic_train))[1]
 
 predicted_train_labels <- numeric(length(micb_wrapper$Fitted_Values))
-for(lp in 1:length(predicted_labels)){
+for(lp in 1:length(predicted_train_labels)){
   if(micb_wrapper$Fitted_Values[lp] < 0){
     predicted_train_labels[lp] <- 0
   } else{
@@ -42,13 +42,14 @@ for(lp in 1:length(predicted_labels)){
   }
 }
 
-riskfct(y=train$Survived,f=predicted_train_labels) / dim(train)[1]
+riskfct(y=train$Survived,f=predicted_train_labels) / dim(na.omit(train))[1]
 
 # Make predictions
 source("icb_predict_wrapper_offset.R")
 pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Survived")
 avg_risk_test = pred$TestRisk
-riskfct(y=test$Survived,f=pred$`Predicted Labels`) / dim(test)[1]
+
+riskfct(y=test$Survived,f=pred$`Predicted Labels`) / dim(na.omit(test))[1]
 
 ##### Plot the risk vs the number of iterations 
 
