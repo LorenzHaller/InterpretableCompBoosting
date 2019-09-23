@@ -7,17 +7,31 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   #formula <- terms.formula(icb_object$Input_Parameters[4])
   #X <- model.matrix(formula, newdata)
   #X_new <- cbind(1, newdata)
-  X_new <- newdata
+  X_new <- na.omit(newdata)
   
   if(!is.null(target)){
-    y <- newdata[,target]
+    y <- X_new[,target]
+    if(target_class=="Binomial"){
+      #y <- (c(-1, 1)[as.integer(y)])
+      y_int <- numeric(length(y))
+      for(l in 1:length(y)){
+        if(y[l] == icb_object$Input_Parameters[[6]]){
+          y_int[l] <- -1
+        }else if(y[l] == icb_object$Input_Parameters[[7]]){
+          y_int[l] <- 1
+        }
+      }
+      #y_int
+    }
   }
+  
+  target_class <- icb_object$Input_Parameters[[5]]
   
   # Create an empty numeric vector for saving the test risk results
   test_risk <- numeric(length(icb_object$Risk))
   
   # Create an empty vector with the length of newdata
-  prediction <- vector(mode = "numeric", length = dim(newdata)[1])
+  prediction <- vector(mode = "numeric", length = dim(X_new)[1])
   
   # Fill every entry with the intercept of the model
   for (l in 1:length(prediction)){
@@ -29,7 +43,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   
   # Calculate the risk if possible
   if(!is.null(target)){
-    test_risk[1] <- icb_object$Riskfunction(y = y, f = prediction) / dim(newdata)[1]
+    test_risk[1] <- icb_object$Riskfunction(y = y_int, f = prediction) / dim(X_new)[1]
   }
   
   
@@ -47,7 +61,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     
     # Calculate the risk in this iteration
     if(!is.null(target)){
-      test_risk[iteration+1] <- icb_object$Riskfunction(y = y, f = prediction) / dim(newdata)[1]
+      test_risk[iteration+1] <- icb_object$Riskfunction(y = y_int, f = prediction_offset+pred_iteration) / dim(X_new)[1]
     }
     
     iteration <- iteration + 1
@@ -55,7 +69,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   }
   
   # Save the predictions after the linear part
-  prediction_linear <- prediction
+  prediction_linear <- prediction_offset + pred_iteration
   
   ## Version 2: use result of linear coefficients (uses one specific nu)
   #prediction <- as.matrix(cbind(1, X_new[,-1])) %*% icb_object$Coefficients$Linear_coefficients 
@@ -71,13 +85,13 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     
     if(!is.null(target)){
       # Calculate the risk in this iteration
-      test_risk[iteration+1] <- icb_object$Riskfunction(y = y, f = prediction) / dim(newdata)[1]
+      test_risk[iteration+1] <- icb_object$Riskfunction(y = y_int, f = prediction_linear+pred_iteration) / dim(X_new)[1]
     }
     
     iteration <- iteration + 1
   }
   
-  prediction_spline <- prediction
+  prediction_spline <- prediction_linear + pred_iteration
   
   
   
@@ -86,19 +100,37 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     
     pred_iteration <- icb_object$Prediction_Models$Tree[iteration - icb_object$`Transition Iterations`[2]]$predict(newdata = X_new)
     
-    prediction <- prediction_spline + pred_iteration
+    #prediction <- prediction_spline + pred_iteration
     
     if(!is.null(target)){
       # Calculate the risk in this iteration
-      test_risk[iteration+1] <- icb_object$Riskfunction(y = y, f = prediction) / dim(newdata)[1]
+      test_risk[iteration+1] <- icb_object$Riskfunction(y = y_int, f = prediction_spline+pred_iteration) / dim(X_new)[1]
     }
     
     iteration <- iteration + 1
   }
   
+  prediction_tree <- prediction_spline + pred_iteration
+  
+  if(target_class=="Binomial"){
+    predicted_labels <- numeric(length(prediction_tree))
+    for(lp in 1:length(predicted_labels)){
+      if(prediction_tree[lp] < 0){
+        predicted_labels[lp] <- 0
+      } else{
+        predicted_labels[lp] <- 1
+      }
+    }
+  }
+  
+  
+  
   
   return_list <- list()
-  return_list[["Predictions"]] <- prediction
+  return_list[["Predictions"]] <- prediction_tree
+  if(target_class=="Binomial"){
+    return_list[["Predicted Labels"]] <- predicted_labels
+  }
   return_list[["TestRisk"]] <- test_risk
   
   return(return_list)
