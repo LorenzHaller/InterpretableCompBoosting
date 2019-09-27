@@ -48,10 +48,11 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   if(target_class == "Gaussian"){
     family = Gaussian()
   } else if(target_class == "Binomial"){
-    family = AdaExp()
+    family = Binomial()
   } else{
     stop("No correct family for target!")
   }
+  
   ngradient <- family@ngradient
   riskfct <- family@risk
     
@@ -70,7 +71,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   #Calculate the risk of the intercept model
   if(target_class == "Binomial"){
     risk_iter <- numeric()
-    risk_iter[1] <- pred_label_risk(fit_0, y = y_int)
+    risk_iter[1] <- riskfct(y=y_int,pred_label_risk(fit_0))
   }
   
   risk_0 <- riskfct(y = y_int, f = fitted_values)
@@ -90,7 +91,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
   # Save the risk for the predicted labels
   if(target_class == "Binomial"){
-    risk_iter[iteration+1] <- pred_label_risk(mb_linear$fitted(), y = y_int)
+    risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_linear$fitted()))
   }
   
   while((mb_linear$risk()[iteration] / mb_linear$risk()[iteration+1]) >= (1 + epsilon)){
@@ -102,7 +103,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
       mb_linear <- mb_linear[iteration]
 
       if(target_class == "Binomial"){
-        risk_iter[iteration+1] <- pred_label_risk(mb_linear$fitted(), y = y_int)
+        risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_linear$fitted()))
       }
       
     }
@@ -125,7 +126,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                                  control = boost_control(nu = nu, mstop = 1))
     
     
-    risk_iter[iteration+1] <- pred_label_risk(mb_spline$fitted(), y = y_int)
+    risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_spline$fitted()))
     
     
     while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
@@ -137,7 +138,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
       mb_spline <- mb_spline[iteration - transition_splines]
       
       # Save risk
-      risk_iter[iteration+1] <- pred_label_risk(mb_spline$fitted(), y = y_int)
+      risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_spline$fitted()))
       
     }
     
@@ -194,7 +195,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                      control = boost_control(nu = nu, mstop = 1))
   
   if(target_class == "Binomial"){
-    risk_iter[iteration+1] <- pred_label_risk(mb_tree$fitted(), y = y_int)
+    risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree$fitted()))
   }
   
   
@@ -206,7 +207,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     mb_tree <- mb_tree[iteration - transition_trees]
     
     if(target_class == "Binomial"){
-      risk_iter[iteration+1] <- pred_label_risk(mb_linear$fitted(), y = y_int)
+      risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree$fitted()))
     }
   }
   
