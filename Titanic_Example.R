@@ -19,6 +19,7 @@ formula <- Survived ~ Pclass + Age + Fare
 class(titanic_train$Survived)
 
 source("family.R")
+source("helper_functions.R")
 
 # Split the data in training and test data (75/25 split)
 set.seed(2995)

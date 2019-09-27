@@ -23,6 +23,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   target <- all.vars(formula)[1]
   levels <- c()
   
+  # Create a target variable with {-1,1} encoding
   if(target_class=="Binomial"){
     data[,target] <- as.factor(data[,target])
     y <- data[, target]
@@ -66,18 +67,11 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     fitted_values <- fit_0
   }
   
-  # Calculate the risk of the intercept model
-  # if(target_class == "Binomial"){
-  #   predicted_train_labels <- numeric(length(fitted_values))
-  #   for(lp in 1:length(predicted_train_labels)){
-  #     if(fitted_values[lp] < 0){
-  #       predicted_train_labels[lp] <- 0
-  #     } else{
-  #       predicted_train_labels[lp] <- 1
-  #     }
-  #   }
-  #   risk_0_labels <- riskfct(y = y_int, f = predicted_train_labels)
-  # }
+  #Calculate the risk of the intercept model
+  if(target_class == "Binomial"){
+    risk_iter <- numeric()
+    risk_iter[1] <- pred_label_risk(fit_0, y = y_int)
+  }
   
   risk_0 <- riskfct(y = y_int, f = fitted_values)
   
@@ -94,6 +88,11 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   mb_linear <- mboost::mboost(formula = formula, data = data, family = family, offset = fit_0,
                              baselearner = "bols", control = boost_control(nu = nu, mstop = 1))
   
+  # Save the risk for the predicted labels
+  if(target_class == "Binomial"){
+    risk_iter[iteration+1] <- pred_label_risk(mb_linear$fitted(), y = y_int)
+  }
+  
   while((mb_linear$risk()[iteration] / mb_linear$risk()[iteration+1]) >= (1 + epsilon)){
       
       #Add one to the iteration number
@@ -101,16 +100,10 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
       
       # Create next iteration 
       mb_linear <- mb_linear[iteration]
-      # 
-      # if(target_class == "Binomial"){
-      #   for(lp in 1:length(predicted_labels)){
-      #     if(fitted_values[lp] < 0){
-      #       predicted_train_labels[lp] <- 0
-      #     } else{
-      #       predicted_train_labels[lp] <- 1
-      #     }
-      #   }
-      # }
+
+      if(target_class == "Binomial"){
+        risk_iter[iteration+1] <- pred_label_risk(mb_linear$fitted(), y = y_int)
+      }
       
     }
     
@@ -132,6 +125,9 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                                  control = boost_control(nu = nu, mstop = 1))
     
     
+    risk_iter[iteration+1] <- pred_label_risk(mb_spline$fitted(), y = y_int)
+    
+    
     while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
       
       #Add one to the iteration number
@@ -139,6 +135,9 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
       
       # Create next iteration
       mb_spline <- mb_spline[iteration - transition_splines]
+      
+      # Save risk
+      risk_iter[iteration+1] <- pred_label_risk(mb_spline$fitted(), y = y_int)
       
     }
     
@@ -194,6 +193,10 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                      data = data, family = family, offset = fitted_values,
                      control = boost_control(nu = nu, mstop = 1))
   
+  if(target_class == "Binomial"){
+    risk_iter[iteration+1] <- pred_label_risk(mb_tree$fitted(), y = y_int)
+  }
+  
   
   while((mb_tree$risk()[iteration-transition_trees] / mb_tree$risk()[iteration-transition_trees+1]) >= (1 + epsilon)){
     
@@ -202,6 +205,9 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     
     mb_tree <- mb_tree[iteration - transition_trees]
     
+    if(target_class == "Binomial"){
+      risk_iter[iteration+1] <- pred_label_risk(mb_linear$fitted(), y = y_int)
+    }
   }
   
   
@@ -224,6 +230,9 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, levels)
   return_list[["Data"]] <- X
   return_list[["Riskfunction"]] <- riskfct
+  if(target_class == "Binomial"){
+    return_list[["LabelRisk"]] <- risk_iter
+  }
   
   # Print the coefficients of the final model
   return(return_list)
