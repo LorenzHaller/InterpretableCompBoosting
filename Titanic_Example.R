@@ -23,7 +23,7 @@ source("helper_functions.R")
 
 # Split the data in training and test data (75/25 split)
 set.seed(12)
-sample <- sample.int(n = nrow(data), size = floor(.66*nrow(data)), replace = F)
+sample <- sample.int(n = nrow(data), size = floor(.5*nrow(data)), replace = F)
 train <- data[sample, ]
 test  <- data[-sample, ]
 
@@ -31,7 +31,7 @@ test  <- data[-sample, ]
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
-                                                target_class="Binomial",epsilon = 0.001)
+                                                target_class="Binomial",epsilon = 0.0001)
 avg_risk_wrapper = micb_wrapper$Risk / dim(na.omit(titanic_train))[1]
 avg_label_risk = micb_wrapper$LabelRisk / dim(na.omit(titanic_train))[1]
 
