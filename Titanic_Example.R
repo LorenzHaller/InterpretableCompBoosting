@@ -28,7 +28,7 @@ train <- data[sample, ]
 test  <- data[-sample, ]
 
 
-### OWN METHOD MBOOST WRAPPER
+### OWN METHOD defined as MBOOST WRAPPER 
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
                                                 target_class="Binomial",epsilon = 0.0001)
