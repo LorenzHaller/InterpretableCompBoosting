@@ -150,6 +150,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     return_list[["TestLabelRisk"]] <- test_risk_label
   }
   return_list[["TestRisk"]] <- test_risk
+  return_list[["Transition Iterations"]] <- icb_object$`Transition Iterations`
   
   return(return_list)
   
