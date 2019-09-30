@@ -24,6 +24,8 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
         }
       }
       #y_int
+    } else{
+      y_int <- y 
     }
   }
   
@@ -47,7 +49,9 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   # Calculate the risk if possible
   if(!is.null(target)){
     test_risk[1] <- icb_object$Riskfunction(y = y_int, f = prediction) / dim(X_new)[1]
-    test_risk_label[1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction)) / dim(X_new)[1]
+    if(target_class=="Binomial"){
+      test_risk_label[1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction)) / dim(X_new)[1]
+    }
   }
   
   
@@ -66,7 +70,9 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     # Calculate the risk in this iteration
     if(!is.null(target)){
       test_risk[iteration+1] <- icb_object$Riskfunction(y = y_int, f = prediction_offset+pred_iteration) / dim(X_new)[1]
-      test_risk_label[iteration+1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction_offset+pred_iteration)) / dim(X_new)[1]
+      if(target_class=="Binomial"){
+        test_risk_label[iteration+1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction_offset+pred_iteration)) / dim(X_new)[1]
+      }
     }
     
     iteration <- iteration + 1
@@ -91,7 +97,9 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     if(!is.null(target)){
       # Calculate the risk in this iteration
       test_risk[iteration+1] <- icb_object$Riskfunction(y = y_int, f = prediction_linear+pred_iteration) / dim(X_new)[1]
-      test_risk_label[iteration+1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction_linear+pred_iteration)) / dim(X_new)[1]
+      if(target_class=="Binomial"){
+        test_risk_label[iteration+1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction_linear+pred_iteration)) / dim(X_new)[1]
+      }
     }
     
     iteration <- iteration + 1
@@ -111,7 +119,9 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     if(!is.null(target)){
       # Calculate the risk in this iteration
       test_risk[iteration+1] <- icb_object$Riskfunction(y = y_int, f = prediction_spline+pred_iteration) / dim(X_new)[1]
-      test_risk_label[iteration+1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction_spline+pred_iteration)) / dim(X_new)[1]
+      if(target_class=="Binomial"){
+        test_risk_label[iteration+1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction_spline+pred_iteration)) / dim(X_new)[1]
+      }
     }
     
     iteration <- iteration + 1

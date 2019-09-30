@@ -47,14 +47,14 @@ risk_test = pred$TestRisk / dim(test)[1]
 
 
 ### OWN METHOD MBOOST WRAPPER
-source("icb_mboost_wrapper.R")
+source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=nu_bm, 
                                             target_class = "Gaussian", bl2 = "bbs",
                                             epsilon = 0.001)
 avg_risk_wrapper = micb_wrapper$Risk / dim(train)[1]
 
 # Make predictions
-source("icb_predict_wrapper.R")
+source("icb_predict_wrapper_offset.R")
 pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
 avg_risk_test = pred$TestRisk
 
@@ -82,7 +82,7 @@ mb_tree_pred = mboost_tree$predict(test)
 ##### Plot the risk vs the number of iterations 
 
 plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
-     ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[2]),main="Own method vs mboost with different base learners")
+     ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[[2]]),main="Own method vs mboost with different base learners")
 abline(v = micb_wrapper$`Transition Iterations`[1])
 abline(v = micb_wrapper$`Transition Iterations`[2])
 points(1:length(avg_risk_test),avg_risk_test,type="b",col="red")
@@ -117,7 +117,7 @@ legend(60,1900,
 #points(1:length(avg_risk_test),avg_risk_test,type="l",col="blue")
 
 plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
-     ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[2]), main="Training vs test risk for own method")
+     ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[[2]]), main="Training vs test risk for own method")
 points(1:length(avg_risk_test),avg_risk_test,type="l",col="blue")
 abline(v = micb_wrapper$`Transition Iterations`[1])
 abline(v = micb_wrapper$`Transition Iterations`[2])
