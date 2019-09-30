@@ -134,10 +134,12 @@ points(1:length(risk_test),risk_test,type="l",col="orange")
 
 ## Visualize the feature effects / individual coefficients of the three phases
 
+# Compare to mboost plot
 plot(mboost_bols_bs)
 
 source("pdp_function.R")
 pdp_function(icb_object = micb_wrapper)
+
 
 ## Linear coefficients
 

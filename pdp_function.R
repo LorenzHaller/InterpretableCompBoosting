@@ -41,6 +41,8 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     
     if(!is.null(linear_coefficients[[1]])){
       prod = basis %*% spline_coefficients[[1]] + intercept + slope * data_temp[,1]
+      sum_linear = intercept + slope * data_temp[,1]
+      sum_linear = as.matrix(sum_linear)
     } else{
       prod = basis %*% spline_coefficients[[1]]
     }            
@@ -52,6 +54,9 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     if(!is.factor(data_temp[,1])){
       plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
            ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
+      if(!is.null(linear_coefficients[[1]])){
+        points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")
+      }
     }
     
   }
