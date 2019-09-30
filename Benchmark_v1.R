@@ -12,7 +12,7 @@ attach(airquality)
 data <- na.omit(airquality)
 
 # Split the data in training and test data (75/25 split)
-set.seed(1491)
+set.seed(2807)
 sample <- sample.int(n = nrow(data), size = floor(.66*nrow(data)), replace = F)
 train <- data[sample, ]
 test  <- data[-sample, ]
@@ -36,19 +36,21 @@ nu_bm = 0.05
 ## OWN METHOD ########################################################################
 source("linearmodels_splines_trees_mboost.R")
 micb_500 = interpretable_comp_boost_m(train, formula, nu=nu_bm, mstop=mstop_bm, 
-                                      family=Gaussian(),epsilon = 0.0025)
+                                      family=Gaussian(),epsilon = 0.001)
 avg_risk = micb_500$Risk / dim(train)[1]
 
 # Make predictions
 source("icb_predict.R")
 pred = icb_predict(icb_object = micb_500, newdata = test, target="Ozone")
 
-avg_risk_test = pred$TestRisk / dim(test)[1]
+risk_test = pred$TestRisk / dim(test)[1]
+
 
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=nu_bm, 
-                                            family=Gaussian(),epsilon = 0.001)
+                                            target_class = "Gaussian", bl2 = "bbs",
+                                            epsilon = 0.001)
 avg_risk_wrapper = micb_wrapper$Risk / dim(train)[1]
 
 # Make predictions
@@ -83,20 +85,20 @@ plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Averag
      ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[2]),main="Own method vs mboost with different base learners")
 abline(v = micb_wrapper$`Transition Iterations`[1])
 abline(v = micb_wrapper$`Transition Iterations`[2])
-points(1:length(avg_risk_test),avg_risk_test,type="p",col="red")
+points(1:length(avg_risk_test),avg_risk_test,type="b",col="red")
 
 #Mboost using linear terms
 points(1:length(mboost_bols$risk()),mboost_bols$risk()/dim(train)[1],type="l",col="brown")
-#h_pred_bols=micb_500$Riskfunction(y=test$Ozone,f=mb_bols_pred)/dim(test)[1]
-#abline(h=h_pred_bols, col="brown")
+h_pred_bols=micb_wrapper$Riskfunction(y=test$Ozone,f=mb_bols_pred)/dim(test)[1]
+abline(h=h_pred_bols, col="brown")
 # Mboost using splines
 points(1:length(mboost_bols_bs$risk()),mboost_bols_bs$risk()/dim(train)[1],type="l",col="blue")
-#h_pred=micb_500$Riskfunction(y=test$Ozone,f=mb_spline_pred)/dim(test)[1]
-#abline(h=h_pred, col="blue")
+h_pred=micb_wrapper$Riskfunction(y=test$Ozone,f=mb_spline_pred)/dim(test)[1]
+abline(h=h_pred, col="blue")
 # Combine to mboost using trees
 points(1:length(mboost_tree$risk()),mboost_tree$risk()/dim(train)[1],type="l",col="green")
-#h_pred_tree=micb_500$Riskfunction(y=test$Ozone,f=mb_tree_pred)/dim(test)[1]
-#abline(h=h_pred_tree, col = "green")
+h_pred_tree=micb_wrapper$Riskfunction(y=test$Ozone,f=mb_tree_pred)/dim(test)[1]
+abline(h=h_pred_tree, col = "green")
 
 # Add a legend to the plot
 legend(60,1900, 
@@ -114,17 +116,18 @@ legend(60,1900,
 #points(1:length(micb_500$Risk),avg_risk,type="l",col="red")
 #points(1:length(avg_risk_test),avg_risk_test,type="l",col="blue")
 
-plot(1:length(micb_500$Risk),avg_risk, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
-     ylim=c(0,2000),xlim=c(0,micb_500$Input_Parameters[2]), main="Training vs test risk for own method")
+plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
+     ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[2]), main="Training vs test risk for own method")
 points(1:length(avg_risk_test),avg_risk_test,type="l",col="blue")
-abline(v = micb_500$`Transition Iterations`[1])
-abline(v = micb_500$`Transition Iterations`[2])
+abline(v = micb_wrapper$`Transition Iterations`[1])
+abline(v = micb_wrapper$`Transition Iterations`[2])
 legend(60,1900, 
        legend=c("Training", "Test"),
        col=c("red","blue"), 
        lty=1:2, 
        cex=0.75)
-
+points(1:length(avg_risk),avg_risk,type="l",col="green")
+points(1:length(risk_test),risk_test,type="l",col="orange")
 
 
 #################################
@@ -132,6 +135,9 @@ legend(60,1900,
 ## Visualize the feature effects / individual coefficients of the three phases
 
 plot(mboost_bols_bs)
+
+source("pdp_function.R")
+pdp_function(icb_object = micb_wrapper)
 
 ## Linear coefficients
 

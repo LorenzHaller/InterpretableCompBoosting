@@ -14,8 +14,12 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     feature_name = feature_names[w]
     
     linear_coefficients = icb_object$Prediction_Models$Linear$coef()[w]
-    intercept = linear_coefficients[[1]][[1]]
-    slope = linear_coefficients[[1]][[2]]
+    
+    if(!is.null(linear_coefficients[[1]])){
+      intercept = linear_coefficients[[1]][[1]]
+      slope = linear_coefficients[[1]][[2]]
+    }
+    
     spline_coefficients = icb_object$Prediction_Models$Spline$coef()[w]
     #mixed_coefficients = spline_coefficients + intercept + slope + 
     
@@ -23,19 +27,23 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     iteration <- icb_object$`Transition Iterations`[1]+1
     
     object <- icb_object$Prediction_Models$Spline
+    basis <- extract(object,"design")[[w]]
+    knots <- attr(basis,"knots")
     
     
-    if(names(object$coef())[w] == paste("bbs(",feature_name,", df = dfbase)",sep="")){
-      basis <- extract(object,"design")[[w]]
-      knots <- attr(basis,"knots")
-      } else{
-      iteration <- iteration + 1
-    }
+    # if(names(object$coef())[w] == paste("bbs(",feature_name,", df = dfbase)",sep="")){
+    #   basis <- extract(object,"design")[[w]]
+    #   knots <- attr(basis,"knots")
+    #   } else{
+    #   iteration <- iteration + 1
+    # }
     
     
-    
-    prod = basis %*% spline_coefficients[[1]] + intercept + slope * data_temp[,1]
-                 
+    if(!is.null(linear_coefficients[[1]])){
+      prod = basis %*% spline_coefficients[[1]] + intercept + slope * data_temp[,1]
+    } else{
+      prod = basis %*% spline_coefficients[[1]]
+    }            
     
     pr = prod
     #pr = data_temp * rescaled_linear_coefficients + prod
