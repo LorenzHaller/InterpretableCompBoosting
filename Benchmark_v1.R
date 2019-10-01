@@ -34,29 +34,37 @@ nu_bm = 0.05
 ##### MODEL TRAINING #################################################################
 
 ## OWN METHOD ########################################################################
-source("linearmodels_splines_trees_mboost.R")
-micb_500 = interpretable_comp_boost_m(train, formula, nu=nu_bm, mstop=mstop_bm, 
-                                      family=Gaussian(),epsilon = 0.001)
-avg_risk = micb_500$Risk / dim(train)[1]
-
-# Make predictions
-source("icb_predict.R")
-pred = icb_predict(icb_object = micb_500, newdata = test, target="Ozone")
-
-risk_test = pred$TestRisk / dim(test)[1]
+# source("linearmodels_splines_trees_mboost.R")
+# micb_500 = interpretable_comp_boost_m(train, formula, nu=nu_bm, mstop=mstop_bm, 
+#                                       family=Gaussian(),epsilon = 0.001)
+# avg_risk = micb_500$Risk / dim(train)[1]
+# 
+# # Make predictions
+# source("icb_predict.R")
+# pred = icb_predict(icb_object = micb_500, newdata = test, target="Ozone")
+# 
+# risk_test = pred$TestRisk / dim(test)[1]
 
 
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper_offset.R")
-micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=nu_bm, 
+micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
                                             target_class = "Gaussian", bl2 = "bbs",
-                                            epsilon = 0.001)
-avg_risk_wrapper = micb_wrapper$Risk / dim(train)[1]
+                                            epsilon = 0.005)
+avg_risk_wrapper = micb_wrapper$Risk
 
 # Make predictions
 source("icb_predict_wrapper_offset.R")
 pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
 avg_risk_test = pred$TestRisk
+
+# Show results in table
+source("helper_functions.R")
+stage_risk(micb_object = micb_wrapper)
+stage_risk(pred_object = pred)
+
+
+
 
 
 

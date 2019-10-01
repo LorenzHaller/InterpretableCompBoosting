@@ -1,7 +1,7 @@
 # Combine linear models and splines (using mboost code)
 
 interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class="Gaussian",
-                                     epsilon = 0.0025, bl2=c("bbs","btree"), max_depth = 8){
+                                     epsilon = 0.005, bl2=c("bbs","btree"), max_depth = 8){
   # data:     a data frame containing target and features
   # formula:  a formula specifying the model
   ## y:       the target variable
@@ -274,7 +274,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   return_list[["Coefficients"]] <- c(mb_linear$coef(), mb_spline$coef())
   return_list[["Fitted_Values"]] <- fitted_values
   return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees,transition_trees_max)
-  return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk()[-1],mb_tree$risk()[-1],mb_tree_max$risk()[-1])
+  return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk()[-1],mb_tree$risk()[-1],mb_tree_max$risk()[-1]) / dim(data)[1]
   return_list[["Prediction_Models"]] <- Prediction_Models
   return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, levels)
   return_list[["Data"]] <- X

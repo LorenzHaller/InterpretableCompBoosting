@@ -109,10 +109,10 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   
   
   
-  # For the tree part:
-  while(iteration < length(icb_object$Risk)){
+  # For the tree (depth=2) part:
+  while(iteration <= (icb_object$`Transition Iterations`[3])){
     
-    pred_iteration <- icb_object$Prediction_Models$Tree[iteration - icb_object$`Transition Iterations`[2]]$predict(newdata = X_new)
+    pred_iteration <- icb_object$Prediction_Models$Tree[iteration - icb_object$`Transition Iterations`[3]]$predict(newdata = X_new)
     
     #prediction <- prediction_spline + pred_iteration
     
@@ -129,10 +129,40 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   
   prediction_tree <- prediction_spline + pred_iteration
   
+  
+  # For the tree (depth via user input) part:
+  while(iteration < length(icb_object$Risk)){
+    
+    pred_iteration <- icb_object$Prediction_Models$TreeMax[iteration - icb_object$`Transition Iterations`[3]]$predict(newdata = X_new)
+    
+    #prediction <- prediction_spline + pred_iteration
+    
+    if(!is.null(target)){
+      # Calculate the risk in this iteration
+      test_risk[iteration+1] <- icb_object$Riskfunction(y = y_int, f = prediction_tree+pred_iteration) / dim(X_new)[1]
+      if(target_class=="Binomial"){
+        test_risk_label[iteration+1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction_tree+pred_iteration)) / dim(X_new)[1]
+      }
+    }
+    
+    iteration <- iteration + 1
+  }
+  
+  
+  prediction_tree_max <- prediction_tree + pred_iteration
+  
+  
+  
+  
+  
+  
+  
+  
+  
   if(target_class=="Binomial"){
-    predicted_labels <- numeric(length(prediction_tree))
+    predicted_labels <- numeric(length(prediction_tree_max))
     for(lp in 1:length(predicted_labels)){
-      if(prediction_tree[lp] < 0){
+      if(prediction_tree_max[lp] < 0){
         predicted_labels[lp] <- 0
       } else{
         predicted_labels[lp] <- 1
@@ -144,7 +174,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   
   
   return_list <- list()
-  return_list[["Predictions"]] <- prediction_tree
+  return_list[["Predictions"]] <- prediction_tree_max
   if(target_class=="Binomial"){
     return_list[["Predicted Labels"]] <- predicted_labels
     return_list[["TestLabelRisk"]] <- test_risk_label
