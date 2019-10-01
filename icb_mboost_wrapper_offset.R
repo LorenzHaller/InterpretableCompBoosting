@@ -21,7 +21,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   formula <- terms.formula(formula)
   X <- model.matrix(formula, data)
   target <- all.vars(formula)[1]
-  levels <- c()
+  levels <- "0"
   
   # Create a target variable with {-1,1} encoding
   if(target_class=="Binomial"){
@@ -276,7 +276,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees,transition_trees_max)
   return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk()[-1],mb_tree$risk()[-1],mb_tree_max$risk()[-1]) / dim(data)[1]
   return_list[["Prediction_Models"]] <- Prediction_Models
-  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, levels)
+  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, levels, bl2)
   return_list[["Data"]] <- X
   return_list[["Riskfunction"]] <- riskfct
   if(target_class == "Binomial"){

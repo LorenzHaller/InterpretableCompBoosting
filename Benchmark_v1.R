@@ -49,7 +49,7 @@ nu_bm = 0.05
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
-                                            target_class = "Gaussian", bl2 = "bbs",
+                                            target_class = "Gaussian", bl2 = "btree",
                                             epsilon = 0.005)
 avg_risk_wrapper = micb_wrapper$Risk
 
@@ -144,6 +144,7 @@ points(1:length(risk_test),risk_test,type="l",col="orange")
 
 # Compare to mboost plot
 plot(mboost_bols_bs)
+plot(mboost_tree)
 
 source("pdp_function.R")
 pdp_function(icb_object = micb_wrapper)
