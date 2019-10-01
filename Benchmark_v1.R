@@ -64,7 +64,9 @@ stage_risk(micb_object = micb_wrapper)
 stage_risk(pred_object = pred)
 
 
-
+# Plot number of features over time
+plot(1:length(micb_wrapper$Feature_Counter),micb_wrapper$Feature_Counter,type="l",
+     ylab="Number of features",xlab="Iterations")
 
 
 
@@ -83,6 +85,17 @@ mb_spline_pred = mboost_bols_bs$predict(test)
 mboost_tree = mboost::mboost(formula = formula, data = train, baselearner = "btree",
                              control = boost_control(nu = nu_bm, mstop = mstop_bm))
 mb_tree_pred = mboost_tree$predict(test)
+
+# # Look at partial dependence plot of mboost tree with depth=2
+# ctrl = partykit::ctree_control(maxdepth = 2L)
+# tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
+# tree_formula <- as.formula(tree_formula)
+# mb_tree_2 = mboost::mboost(formula = tree_formula, 
+#                  data = train, family = family,
+#                  control = boost_control(nu = nu_bm, mstop = mstop_bm))
+# plot(mb_tree_2)
+# environment(mb_tree_2$fitted)$ens[[1]]
+
 
 
 ##### VISUALISATION / COMPARISON #########################################################

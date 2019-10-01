@@ -77,6 +77,11 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   risk_0 <- riskfct(y = y_int, f = fitted_values)
   
   
+  # Create a counter for how many features are in the model
+  feature_counter <- numeric()
+  feature_counter[1] <- 0
+  feature_list <- c()
+  
   # Initialize a vector to save the risk values for the labels
   # risk_iter <- numeric()
   # risk_iter[1] <- risk_0_labels
@@ -89,6 +94,14 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   # Start with an initial mboost iteration
   mb_linear <- mboost::mboost(formula = formula, data = data, family = family, offset = fit_0,
                              baselearner = "bols", control = boost_control(nu = nu, mstop = 1))
+  
+  # Check if feature added is new
+  if(!mb_linear$xselect()[iteration] %in% feature_list){
+    feature_list <- c(feature_list,as.character(mb_linear$xselect()[iteration]))
+    feature_counter[iteration+1] <- feature_counter[iteration] + 1
+  } else{
+    feature_counter[iteration+1] <- feature_counter[iteration]
+  }
   
   # Save the risk for the predicted labels
   if(target_class == "Binomial"){
@@ -107,6 +120,13 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
         risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_linear$fitted()))
       }
       
+      # Check if feature added is new
+      if(!mb_linear$xselect()[iteration] %in% feature_list){
+        feature_list <- c(feature_list,as.character(mb_linear$xselect()[iteration]))
+        feature_counter[iteration+1] <- feature_counter[iteration] + 1
+      } else{
+        feature_counter[iteration+1] <- feature_counter[iteration]
+      }
     }
     
   transition_splines <- iteration
@@ -125,6 +145,13 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                                  baselearner = "btree", offset = mb_linear$fitted(),
                                  control = boost_control(nu = nu, mstop = 1))
     
+    # Check if feature added is new
+    if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
+      feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
+      feature_counter[iteration+1] <- feature_counter[iteration] + 1
+    } else{
+      feature_counter[iteration+1] <- feature_counter[iteration]
+    }
     
     risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_spline$fitted()))
     
@@ -140,6 +167,13 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
       # Save risk
       risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_spline$fitted()))
       
+      # Check if feature added is new
+      if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
+        feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
+        feature_counter[iteration+1] <- feature_counter[iteration] + 1
+      } else{
+        feature_counter[iteration+1] <- feature_counter[iteration]
+      }
     }
     
     transition_trees <- iteration
@@ -156,6 +190,13 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                                  baselearner = bl2, offset = mb_linear$fitted(),
                                  control = boost_control(nu = nu, mstop = 1))
     
+    # Check if feature added is new
+    if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
+      feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
+      feature_counter[iteration+1] <- feature_counter[iteration] + 1
+    } else{
+      feature_counter[iteration+1] <- feature_counter[iteration]
+    }
     
     while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
       
@@ -165,6 +206,13 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
       # Create next iteration
       mb_spline <- mb_spline[iteration - transition_splines]
       
+      # Check if feature added is new
+      if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
+        feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
+        feature_counter[iteration+1] <- feature_counter[iteration] + 1
+      } else{
+        feature_counter[iteration+1] <- feature_counter[iteration]
+      }
     }
     
     transition_trees <- iteration
@@ -194,6 +242,14 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                      data = data, family = family, offset = fitted_values,
                      control = boost_control(nu = nu, mstop = 1))
   
+  # Check if feature added is new
+  if(!mb_tree$xselect()[iteration-transition_trees] %in% feature_list){
+    feature_list <- c(feature_list,as.character(mb_tree$xselect()[iteration-transition_trees]))
+    feature_counter[iteration+1] <- feature_counter[iteration] + 1
+  } else{
+    feature_counter[iteration+1] <- feature_counter[iteration]
+  }
+  
   if(target_class == "Binomial"){
     risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree$fitted()))
   }
@@ -205,6 +261,14 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     iteration <- iteration + 1
     
     mb_tree <- mb_tree[iteration - transition_trees]
+    
+    # Check if feature added is new
+    if(!mb_tree$xselect()[iteration-transition_trees] %in% feature_list){
+      feature_list <- c(feature_list,as.character(mb_tree$xselect()[iteration-transition_trees]))
+      feature_counter[iteration+1] <- feature_counter[iteration] + 1
+    } else{
+      feature_counter[iteration+1] <- feature_counter[iteration]
+    }
     
     if(target_class == "Binomial"){
       risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree$fitted()))
@@ -237,6 +301,14 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                    data = data, family = family, offset = mb_tree$fitted(),
                    control = boost_control(nu = nu, mstop = 1))
   
+  # Check if feature added is new
+  if(!mb_tree_max$xselect()[iteration-transition_trees_max] %in% feature_list){
+    feature_list <- c(feature_list,as.character(mb_tree_max$xselect()[iteration-transition_trees_max]))
+    feature_counter[iteration+1] <- feature_counter[iteration] + 1
+  } else{
+    feature_counter[iteration+1] <- feature_counter[iteration]
+  }
+  
   if(target_class == "Binomial"){
     risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree_max$fitted()))
   }
@@ -248,6 +320,14 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     iteration <- iteration + 1
     
     mb_tree_max <- mb_tree_max[iteration - transition_trees_max]
+    
+    # Check if feature added is new
+    if(!mb_tree_max$xselect()[iteration-transition_trees_max] %in% feature_list){
+      feature_list <- c(feature_list,as.character(mb_tree_max$xselect()[iteration-transition_trees_max]))
+      feature_counter[iteration+1] <- feature_counter[iteration] + 1
+    } else{
+      feature_counter[iteration+1] <- feature_counter[iteration]
+    }
     
     if(target_class == "Binomial"){
       risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree_max$fitted()))
@@ -278,6 +358,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   return_list[["Prediction_Models"]] <- Prediction_Models
   return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, levels, bl2)
   return_list[["Data"]] <- X
+  return_list[["Feature_Counter"]] <- feature_counter
   return_list[["Riskfunction"]] <- riskfct
   if(target_class == "Binomial"){
     return_list[["LabelRisk"]] <- risk_iter
