@@ -13,7 +13,12 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
   
   # Performing checks on the input parameters: formula, data, nu, mstop, family
-  
+  stopifnot(is.data.frame(data))
+  stopifnot(target_class %in% c("Gaussian","Binomial"))
+  stopfifnot(is.numeric(nu))
+  stopfifnot(is.numeric(epsilon))
+  stopifnot(bl2 %in% c("bbs","btree"))
+  stopfifnot(is.numeric(max_depth))
   
   # Preparing the formula and data by seperating the target(y) and the features(X)
   data <- na.omit(data)
