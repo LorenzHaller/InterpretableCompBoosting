@@ -1,17 +1,27 @@
 # Build an mlr wrapper around the function in order to make benchmarking easier
 
-train_icb = function(data, target, args = list(formula, target_class, nu, epsilon, bl2, max_depth)) {
-  
-  control = args
-  
-  # Assign the parameters submitted in 'args'
-  formula <- control$formula
-  target_class <- control$target_class
-  nu <- control$nu
-  epsilon <- control$epsilon
-  bl2 <- control$bl2
-  max_depth <- control$max_depth
-  
+makeRLearner.regr.icb = function() {
+  makeRLearnerRegr(
+    cl = "regr.icb",
+    package = c("mboost","partykit"),
+    par.set = makeParamSet(
+      makeNumericLearnerParam(id = "nu", lower = 0, upper = 1, default = 0.1),
+      makeNumericLearnerParam(id = "epsilon", lower = 0, upper = 1, default = 0.005),
+      makeDiscreteLearnerParam(id = "bl2", default = "bbs", values = c("bbs","btree")),
+      makeIntegerLearnerParam(id = "max_depth", default = 8L)
+    ),
+    properties = c("numerics", "factors"),
+    name = "Gradually interpretable component-wise boosting",
+    short.name = "icb",
+    note = ""
+  )
+}
+
+
+trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...) 
+{
+  formula = getTaskFormula(.task)
+  data = getTaskData(.task, .subset)
   
   # Preparing the formula and data by seperating the target(y) and the features(X)
   data <- na.omit(data)
@@ -19,72 +29,27 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
   formula <- terms.formula(formula)
   X <- model.matrix(formula, data)
   target <- all.vars(formula)[1]
-  levels <- "0"
   
-  # Create a target variable with {-1,1} encoding
-  if(target_class=="Binomial"){
-    data[,target] <- as.factor(data[,target])
-    y <- data[, target]
-    #y_int <- (c(-1, 1)[as.integer(y)])
-    y_int <- numeric(length(y))
-    for(l in 1:length(y)){
-      if(y[l] == levels(y)[1]){
-        y_int[l] <- -1
-      }else if(y[l] == levels(y)[2]){
-        y_int[l] <- 1
-      }
-    }
-    levels <- levels(y)
-  } else{
-    y <- data[, target]
-    y_int <- y
-  }
-  
-  
-  
-  # # Load the gradient and risk function (using the mboost family.R code)
-  if(target_class == "Gaussian"){
-    family = Gaussian()
-  } else if(target_class == "Binomial"){
-    family = Binomial()
-  } else{
-    stop("No correct family for target!")
-  }
-  
+  # Load the gradient and risk function (using the mboost family.R code)
+  family = Gaussian()
   ngradient <- family@ngradient
   riskfct <- family@risk
   
-  
   # Initialize with Intercept model (similar to family@offset(y))
-  if(target_class == "Binomial"){
-    intercept_model <- glm.fit(x=as.matrix(X[,1]), y=y, family = binomial(link = "logit"))
-    fit_0 <- intercept_model$fitted.values
-    fitted_values <- fit_0
-  } else{
-    intercept_model <- lm.fit(x=as.matrix(X[,1]), y=y)
-    fit_0 <- intercept_model$fitted.values
-    fitted_values <- fit_0
-  }
+  intercept_model <- lm.fit(x=as.matrix(X[,1]), y=y)
+  fit_0 <- intercept_model$fitted.values
+  fitted_values <- fit_0
   
   #Calculate the risk of the intercept model
-  if(target_class == "Binomial"){
-    risk_iter <- numeric()
-    risk_iter[1] <- riskfct(y=y_int,pred_label_risk(fit_0))
-  }
-  
   risk_0 <- riskfct(y = y_int, f = fitted_values)
-  
   
   # Create a counter for how many features are in the model
   feature_counter <- numeric()
   feature_counter[1] <- 0
   feature_list <- c()
   
-  # Initialize a vector to save the risk values for the labels
-  # risk_iter <- numeric()
-  # risk_iter[1] <- risk_0_labels
   
-  ### Phase 1: Linear models as base learners
+  ################ Phase 1: Linear models as base learners ########################################
   
   # Initialize the current iteration number
   iteration <- 1
@@ -101,11 +66,6 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
     feature_counter[iteration+1] <- feature_counter[iteration]
   }
   
-  # Save the risk for the predicted labels
-  if(target_class == "Binomial"){
-    risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_linear$fitted()))
-  }
-  
   while((mb_linear$risk()[iteration] / mb_linear$risk()[iteration+1]) >= (1 + epsilon)){
     
     #Add one to the iteration number
@@ -113,10 +73,6 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
     
     # Create next iteration 
     mb_linear <- mb_linear[iteration]
-    
-    if(target_class == "Binomial"){
-      risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_linear$fitted()))
-    }
     
     # Check if feature added is new
     if(!mb_linear$xselect()[iteration] %in% feature_list){
@@ -133,61 +89,30 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
   fitted_values <- mb_linear$fitted()
   
   
-  ### Phase 2: Splines / Tree Stumps
+  #################### Phase 2: Splines / Tree Stumps ###########################################
   
-  if(target_class=="Binomial"){
+  iteration <- iteration + 1 
     
-    iteration <- iteration + 1 
-    
-    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
-                                 baselearner = "btree", offset = mb_linear$fitted(),
-                                 control = boost_control(nu = nu, mstop = 1))
-    
-    # Check if feature added is new
-    if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
-      feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
-      feature_counter[iteration+1] <- feature_counter[iteration] + 1
-    } else{
-      feature_counter[iteration+1] <- feature_counter[iteration]
-    }
-    
-    risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_spline$fitted()))
-    
-    
-    while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
-      
-      #Add one to the iteration number
-      iteration <- iteration + 1
-      
-      # Create next iteration
-      mb_spline <- mb_spline[iteration - transition_splines]
-      
-      # Save risk
-      risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_spline$fitted()))
-      
-      # Check if feature added is new
-      if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
-        feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
-        feature_counter[iteration+1] <- feature_counter[iteration] + 1
-      } else{
-        feature_counter[iteration+1] <- feature_counter[iteration]
-      }
-    }
-    
-    transition_trees <- iteration
-    
-    # Save fitted values of the last linear model iteration to use them as offset
-    fitted_values <- mb_spline$fitted()
-    
-    
-  } else if(target_class=="Gaussian"){
-    
-    iteration <- iteration + 1 
-    
-    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+  mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
                                  baselearner = bl2, offset = mb_linear$fitted(),
                                  control = boost_control(nu = nu, mstop = 1))
     
+  # Check if feature added is new
+  if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
+    feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
+    feature_counter[iteration+1] <- feature_counter[iteration] + 1
+  } else{
+    feature_counter[iteration+1] <- feature_counter[iteration]
+  }
+  
+  while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
+    
+    #Add one to the iteration number
+    iteration <- iteration + 1
+    
+    # Create next iteration
+    mb_spline <- mb_spline[iteration - transition_splines]
+    
     # Check if feature added is new
     if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
       feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
@@ -195,34 +120,15 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
     } else{
       feature_counter[iteration+1] <- feature_counter[iteration]
     }
-    
-    while((mb_spline$risk()[iteration-transition_splines] / mb_spline$risk()[iteration-transition_splines+1]) >= (1 + epsilon)){
-      
-      #Add one to the iteration number
-      iteration <- iteration + 1
-      
-      # Create next iteration
-      mb_spline <- mb_spline[iteration - transition_splines]
-      
-      # Check if feature added is new
-      if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
-        feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
-        feature_counter[iteration+1] <- feature_counter[iteration] + 1
-      } else{
-        feature_counter[iteration+1] <- feature_counter[iteration]
-      }
-    }
-    
-    transition_trees <- iteration
-    
-    # Save fitted values of the last linear model iteration to use them as offset
-    fitted_values <- mb_spline$fitted()
-    
-  } 
+  }
+  
+  transition_trees <- iteration
+  
+  # Save fitted values of the last linear model iteration to use them as offset
+  fitted_values <- mb_spline$fitted()
   
   
-  
-  ### Phase 3: Trees with depth=2
+  ############################## Phase 3: Trees with depth=2 ##########################################
   
   iteration <- iteration + 1 
   
@@ -248,10 +154,6 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
     feature_counter[iteration+1] <- feature_counter[iteration]
   }
   
-  if(target_class == "Binomial"){
-    risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree$fitted()))
-  }
-  
   
   while((mb_tree$risk()[iteration-transition_trees] / mb_tree$risk()[iteration-transition_trees+1]) >= (1 + epsilon)){
     
@@ -267,10 +169,6 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
     } else{
       feature_counter[iteration+1] <- feature_counter[iteration]
     }
-    
-    if(target_class == "Binomial"){
-      risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree$fitted()))
-    }
   }
   
   
@@ -279,9 +177,7 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
   transition_trees_max <- iteration
   
   
-  
-  
-  ### Phase 4: Trees with user-specified depth
+  ################### Phase 4: Trees with user-specified depth #######################################
   
   iteration <- iteration + 1 
   
@@ -307,10 +203,6 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
     feature_counter[iteration+1] <- feature_counter[iteration]
   }
   
-  if(target_class == "Binomial"){
-    risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree_max$fitted()))
-  }
-  
   
   while((mb_tree_max$risk()[iteration-transition_trees_max] / mb_tree_max$risk()[iteration-transition_trees_max+1]) >= (1 + epsilon)){
     
@@ -326,16 +218,12 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
     } else{
       feature_counter[iteration+1] <- feature_counter[iteration]
     }
-    
-    if(target_class == "Binomial"){
-      risk_iter[iteration+1] <- riskfct(y=y_int,pred_label_risk(mb_tree_max$fitted()))
-    }
   }
   
   
   fitted_values <- mb_tree_max$fitted()
   
-  
+
   ### Create list for models of all three phases
   Prediction_Models <- list()
   Prediction_Models[["Linear"]] <- mb_linear
@@ -344,18 +232,97 @@ train_icb = function(data, target, args = list(formula, target_class, nu, epsilo
   Prediction_Models[["TreeMax"]] <- mb_tree_max
   
   ### Create a list to return 
-  control$Coefficients <- c(mb_linear$coef(), mb_spline$coef())
-  control$Fitted <- fitted_values
-  control$TransitionIterations <-c(transition_splines,transition_trees,transition_trees_max)
-  control$Risk <- c(mb_linear$risk(),mb_spline$risk()[-1],mb_tree$risk()[-1],mb_tree_max$risk()[-1]) / dim(data)[1]
-  control$PredictionModels <- Prediction_Models
-  control$InputParameters <-c(nu, iteration, epsilon, formula_orig, target_class, levels, bl2)
-  control$Feature_Counter <- feature_counter
-  control$Riskfunction <- riskfct
-  if(target_class == "Binomial"){
-    control$LabelRisk <- risk_iter
+  return_list <- list()
+  return_list[["Coefficients"]] <- c(mb_linear$coef(), mb_spline$coef())
+  return_list[["Fitted_Values"]] <- fitted_values
+  return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees,transition_trees_max)
+  return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk()[-1],mb_tree$risk()[-1],mb_tree_max$risk()[-1]) / dim(data)[1]
+  return_list[["Prediction_Models"]] <- Prediction_Models
+  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, bl2)
+  return_list[["Data"]] <- X
+  return_list[["Feature_Counter"]] <- feature_counter
+  return_list[["Riskfunction"]] <- riskfct
+  
+  # Print the coefficients of the final model
+  return(return_list)
+}
+
+
+
+
+
+
+
+predictLearner.regr.earth = function (.learner, .model, .newdata, ...) 
+{
+  icb_object <- .model
+  X_new <- na.omit(.newdata)
+  
+  # Create an empty vector with the length of newdata
+  prediction <- vector(mode = "numeric", length = dim(X_new)[1])
+  
+  # Fill every entry with the intercept of the model
+  for (l in 1:length(prediction)){
+    prediction[l] <- icb_object$Prediction_Models$Linear$offset[[1]]
+  }
+  
+  # Offset prediction
+  prediction_offset <- prediction
+  
+  
+  iteration <- 1
+  
+  
+  ################# For the linear part: #####################################################
+  
+  while(iteration <= (icb_object$`Transition Iterations`[1])){
+    
+    pred_iteration <- icb_object$Prediction_Models$Linear[iteration]$predict(newdata = X_new)
+    
+    iteration <- iteration + 1
+    
+  }
+  
+  # Save the predictions after the linear part
+  prediction_linear <- prediction_offset + pred_iteration
+  
+  
+  ###################### For the splines part: ###############################################
+  
+  while(iteration <= (icb_object$`Transition Iterations`[2])){
+    
+    pred_iteration <- icb_object$Prediction_Models$Spline[iteration - icb_object$`Transition Iterations`[1]]$predict(newdata = X_new)
+    
+    iteration <- iteration + 1
+  }
+  
+  prediction_spline <- prediction_linear + pred_iteration
+  
+  
+  
+  # #################### For the tree (depth=2) part: ##########################################
+  
+  while(iteration <= (icb_object$`Transition Iterations`[3])){
+    
+    pred_iteration <- icb_object$Prediction_Models$Tree[iteration - icb_object$`Transition Iterations`[3]]$predict(newdata = X_new)
+    
+    iteration <- iteration + 1
+  }
+  
+  prediction_tree <- prediction_spline + pred_iteration
+  
+  
+  #################  For the tree (depth via user input) part: ####################################
+  
+  while(iteration < length(icb_object$Risk)){
+    
+    pred_iteration <- icb_object$Prediction_Models$TreeMax[iteration - icb_object$`Transition Iterations`[3]]$predict(newdata = X_new)
+    
+    iteration <- iteration + 1
   }
   
   
-  return(list(data = data, control = control))
+  prediction_tree_max <- prediction_tree + pred_iteration
+  
+  return(prediction_tree_max)
 }
