@@ -23,12 +23,19 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   formula = getTaskFormula(.task)
   data = getTaskData(.task, .subset)
   
+  nu <- .learner$par.vals$nu
+  epsilon <- .learner$par.vals$epsilon
+  bl2 <- .learner$par.vals$bl2
+  max_depth <- .learner$par.vals$max_depth
+  
   # Preparing the formula and data by seperating the target(y) and the features(X)
   data <- na.omit(data)
   formula_orig <- formula
-  formula <- terms.formula(formula)
+  #formula <- terms.formula(formula)
   X <- model.matrix(formula, data)
   target <- all.vars(formula)[1]
+  y <- data[, target]
+  y_int <- y
   
   # Load the gradient and risk function (using the mboost family.R code)
   family = Gaussian()
@@ -253,9 +260,9 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
 
 
 
-predictLearner.regr.earth = function (.learner, .model, .newdata, ...) 
+predictLearner.regr.icb = function (.learner, .model, .newdata, ...) 
 {
-  icb_object <- .model
+  icb_object <- .model$learner.model
   X_new <- na.omit(.newdata)
   
   # Create an empty vector with the length of newdata
@@ -304,7 +311,7 @@ predictLearner.regr.earth = function (.learner, .model, .newdata, ...)
   
   while(iteration <= (icb_object$`Transition Iterations`[3])){
     
-    pred_iteration <- icb_object$Prediction_Models$Tree[iteration - icb_object$`Transition Iterations`[3]]$predict(newdata = X_new)
+    pred_iteration <- icb_object$Prediction_Models$Tree[iteration - icb_object$`Transition Iterations`[2]]$predict(newdata = X_new)
     
     iteration <- iteration + 1
   }
@@ -324,5 +331,5 @@ predictLearner.regr.earth = function (.learner, .model, .newdata, ...)
   
   prediction_tree_max <- prediction_tree + pred_iteration
   
-  return(prediction_tree_max)
+  return(as.numeric(prediction_tree_max))
 }

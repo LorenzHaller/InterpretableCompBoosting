@@ -112,7 +112,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   # For the tree (depth=2) part:
   while(iteration <= (icb_object$`Transition Iterations`[3])){
     
-    pred_iteration <- icb_object$Prediction_Models$Tree[iteration - icb_object$`Transition Iterations`[3]]$predict(newdata = X_new)
+    pred_iteration <- icb_object$Prediction_Models$Tree[iteration - icb_object$`Transition Iterations`[2]]$predict(newdata = X_new)
     
     #prediction <- prediction_spline + pred_iteration
     
