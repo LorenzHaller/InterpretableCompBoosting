@@ -3,10 +3,10 @@
 source("mlr_wrapper.R")
 
 data(BostonHousing, package = "mlbench")
-excluded <- "chas"
-BostonHousing_num <- BostonHousing[,which(!colnames(BostonHousing) %in% excluded)]
+#excluded <- "chas"
+#BostonHousing_num <- BostonHousing[,which(!colnames(BostonHousing) %in% excluded)]
 
-regr.task = makeRegrTask(id = "bh", data = BostonHousing_num, target = "medv")
+regr.task = makeRegrTask(id = "bh", data = BostonHousing, target = "medv")
 
 n = getTaskSize(regr.task)
 train.set = seq(1, n, by = 2)

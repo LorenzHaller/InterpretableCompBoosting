@@ -6,10 +6,20 @@
 
 setwd("C:/Users/halle/Downloads/Uni/Interpretable Machine Learning/InterpretableCompBoosting")
 
-# Load data
+# Load data for Airquality Example
 data("airquality")
 attach(airquality)
 data <- na.omit(airquality)
+# Get model formula and prepare data
+formula <- Ozone ~ Solar.R + Wind + Temp + Month + Day
+formula <- terms.formula(formula)
+
+# Load data for Boston Housing Example
+data(BostonHousing, package = "mlbench")
+data <- BostonHousing
+formula <- medv ~ crim + zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + b + lstat
+formula <- terms.formula(formula)
+
 
 # Split the data in training and test data (75/25 split)
 set.seed(2807)
@@ -17,9 +27,8 @@ sample <- sample.int(n = nrow(data), size = floor(.66*nrow(data)), replace = F)
 train <- data[sample, ]
 test  <- data[-sample, ]
 
-# Get model formula and prepare data
-formula <- Ozone ~ Solar.R + Wind + Temp + Month + Day
-formula <- terms.formula(formula)
+
+
 
 #Load family.R
 source("family.R")
