@@ -1,5 +1,3 @@
-# Combine linear models and splines (using mboost code)
-
 interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class="Gaussian",
                                      epsilon = 0.005, bl2=c("bbs","btree"), max_depth = 8){
   # data:     a data frame containing target and features
@@ -22,10 +20,31 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
   # Preparing the formula and data by seperating the target(y) and the features(X)
   data <- na.omit(data)
+  
+  # Get the target
   formula_orig <- formula
   formula <- terms.formula(formula)
-  X <- model.matrix(formula, data)
   target <- all.vars(formula)[1]
+  
+  # Create a list of all features names as specified in the formula
+  all_vars <- all.vars(formula)
+  if(all_vars[2] != "."){
+    data <- data[,colnames(data) %in% all_vars]
+  }
+  
+  # Make one-hot encoding for factor variables
+  dummies <- dummyVars(" ~ .", data = data)
+  data <- data.frame(predict(dummies, newdata = data))
+  
+  # Create mlr task to get full formula
+  formula <- as.formula(paste(target,"~ ."))
+  
+  # Save feature names of one-hot-encoded data
+  f_names <- colnames(data)[- which(colnames(data) == target)]
+  
+  # Create the feature matrix
+  X <- model.matrix(formula, data)
+  
   levels <- "0"
   
   # Create a target variable with {-1,1} encoding
@@ -363,6 +382,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   return_list[["Prediction_Models"]] <- Prediction_Models
   return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, levels, bl2)
   return_list[["Data"]] <- X
+  return_list[["FeatureNames"]] <- f_names
   return_list[["Feature_Counter"]] <- feature_counter
   return_list[["Riskfunction"]] <- riskfct
   if(target_class == "Binomial"){

@@ -3,7 +3,7 @@
 makeRLearner.regr.icb = function() {
   makeRLearnerRegr(
     cl = "regr.icb",
-    package = c("mboost","partykit"),
+    package = c("mboost","partykit","caret"),
     par.set = makeParamSet(
       makeNumericLearnerParam(id = "nu", lower = 0, upper = 1, default = 0.1),
       makeNumericLearnerParam(id = "epsilon", lower = 0, upper = 1, default = 0.005),
@@ -30,10 +30,30 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   
   # Preparing the formula and data by seperating the target(y) and the features(X)
   data <- na.omit(data)
-  formula_orig <- formula
-  #formula <- terms.formula(formula)
-  X <- model.matrix(formula, data)
+  
+  # Get the target
   target <- all.vars(formula)[1]
+  
+  # Create a list of all features names as specified in the formula
+  all_vars <- all.vars(formula)
+  if(all_vars[2] != "."){
+    data <- data[,colnames(data) %in% all_vars]
+  }
+  
+  # Make one-hot encoding for factor variables
+  dummies <- dummyVars(" ~ .", data = data)
+  data <- data.frame(predict(dummies, newdata = data))
+  
+  # Create mlr task to get full formula
+  formula <- as.formula(paste(target,"~ ."))
+  
+  # Save feature names of one-hot-encoded data
+  f_names <- colnames(data)[- which(colnames(data) == target)]
+  
+  # Create the feature matrix
+  X <- model.matrix(formula, data)
+  
+  
   y <- data[, target]
   y_int <- y
   
@@ -247,6 +267,7 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   return_list[["Prediction_Models"]] <- Prediction_Models
   return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, bl2)
   return_list[["Data"]] <- X
+  return_list[["FeatureNames"]] <- f_names
   return_list[["Feature_Counter"]] <- feature_counter
   return_list[["Riskfunction"]] <- riskfct
   
