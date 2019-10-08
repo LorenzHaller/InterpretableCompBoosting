@@ -54,31 +54,43 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
       #pr = data_temp * rescaled_linear_coefficients + prod
       if (is.null(ylim)) ylim <- range(pr, na.rm = TRUE)
       
-      if(!is.factor(data_temp[,1])){
-        plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
-             ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
-        if(!is.null(linear_coefficients[[1]])){
-          points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")
-        }
-      }
+      # if(!is.factor(data_temp[,1])){
+      #   plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
+      #        ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
+      #   if(!is.null(linear_coefficients[[1]])){
+      #     points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")
+      #   }
+      # }
     } else if(method == "btree"){
       
       if(!is.null(linear_coefficients[[1]])){
         pr = predict(icb_object$Prediction_Models$Spline, newdata = data, which = w) + intercept + slope * data_temp[,1]
+        pr = as.matrix(pr)
         sum_linear = intercept + slope * data_temp[,1]
         sum_linear = as.matrix(sum_linear)
       } else{
-        pr = predict(icb_object$Prediction_Models$Spline, newdata = data, which = w)
+        pr = as.matrix(predict(icb_object$Prediction_Models$Spline, newdata = data, which = w))
       }  
       
-      if(!is.factor(data_temp[,1])){
-        plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
-             ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
-        if(!is.null(linear_coefficients[[1]])){
-          points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")
-        }
-      }
+      # if(!is.factor(data_temp[,1])){
+      #   plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
+      #        ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
+      #   if(!is.null(linear_coefficients[[1]])){
+      #     points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")
+      #   }
+      # }
       
     }
+    
+    if(!is.factor(data_temp[,1])){
+      if(!(pr[1] == 0)){
+        plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
+             ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
+      }
+      if(!is.null(linear_coefficients[[1]])){
+        points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")
+      }
+    }
+    
   }
 }
