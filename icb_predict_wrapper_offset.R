@@ -7,6 +7,11 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   #formula <- terms.formula(icb_object$Input_Parameters[4])
   #X <- model.matrix(formula, newdata)
   #X_new <- cbind(1, newdata)
+  
+  oldw <- getOption("warn")
+  options(warn = -1)
+  
+  
   X_new <- na.omit(newdata)
   
   
@@ -190,6 +195,8 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   }
   return_list[["TestRisk"]] <- test_risk
   return_list[["Transition Iterations"]] <- icb_object$`Transition Iterations`
+  
+  options(warn = oldw)
   
   return(return_list)
   

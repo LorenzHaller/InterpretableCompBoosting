@@ -59,7 +59,7 @@ nu_bm = 0.05
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
                                             target_class = "Gaussian", bl2 = "btree",
-                                            epsilon = 0.005)
+                                            epsilon = 0.001)
 avg_risk_wrapper = micb_wrapper$Risk
 
 # Make predictions
@@ -99,13 +99,15 @@ mboost_tree = mboost::mboost(formula = formula, data = train, baselearner = "btr
 mb_tree_pred = mboost_tree$predict(test)
 
 # # Look at partial dependence plot of mboost tree with depth=2
-# ctrl = partykit::ctree_control(maxdepth = 2L)
-# tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
-# tree_formula <- as.formula(tree_formula)
-# mb_tree_2 = mboost::mboost(formula = tree_formula, 
-#                  data = train, family = family,
-#                  control = boost_control(nu = nu_bm, mstop = mstop_bm))
-# plot(mb_tree_2)
+ctrl = partykit::ctree_control(maxdepth = 2L)
+feature_string <- paste(colnames(train)[- which(colnames(train) %in% target)], collapse=", ")
+tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
+tree_formula <- as.formula(tree_formula)
+mb_tree_2 = mboost::mboost(formula = tree_formula,
+                 data = train, family = family,
+                 control = boost_control(nu = nu_bm, mstop = mstop_bm))
+#plot(mb_tree_2)
+mb_tree_2_pred = mb_tree_2$predict(test)
 # environment(mb_tree_2$fitted)$ens[[1]]
 
 
@@ -123,22 +125,27 @@ abline(v = micb_wrapper$`Transition Iterations`[3]+1)
 points(1:length(avg_risk_test),avg_risk_test,type="b",col="red")
 
 #Mboost using linear terms
-points(1:length(mboost_bols$risk()),mboost_bols$risk()/dim(train)[1],type="l",col="brown")
-h_pred_bols=micb_wrapper$Riskfunction(y=test$Ozone,f=mb_bols_pred)/dim(test)[1]
+points(1:length(mboost_bols$risk()),mboost_bols$risk()/dim(na.omit(train))[1],type="l",col="brown")
+h_pred_bols=micb_wrapper$Riskfunction(y=test$medv,f=mb_bols_pred)/dim(na.omit(test))[1]
 abline(h=h_pred_bols, col="brown")
 # Mboost using splines
-points(1:length(mboost_bols_bs$risk()),mboost_bols_bs$risk()/dim(train)[1],type="l",col="blue")
-h_pred=micb_wrapper$Riskfunction(y=test$Ozone,f=mb_spline_pred)/dim(test)[1]
+points(1:length(mboost_bols_bs$risk()),mboost_bols_bs$risk()/dim(na.omit(train))[1],type="l",col="blue")
+h_pred=micb_wrapper$Riskfunction(y=test$medv,f=mb_spline_pred)/dim(na.omit(test))[1]
 abline(h=h_pred, col="blue")
 # Combine to mboost using trees
-points(1:length(mboost_tree$risk()),mboost_tree$risk()/dim(train)[1],type="l",col="green")
-h_pred_tree=micb_wrapper$Riskfunction(y=test$Ozone,f=mb_tree_pred)/dim(test)[1]
+points(1:length(mboost_tree$risk()),mboost_tree$risk()/dim(na.omit(train))[1],type="l",col="green")
+h_pred_tree=micb_wrapper$Riskfunction(y=test$medv,f=mb_tree_pred)/dim(na.omit(test))[1]
 abline(h=h_pred_tree, col = "green")
+# Combine to mboost using trees of depth = 2
+points(1:length(mb_tree_2$risk()),mb_tree_2$risk()/dim(na.omit(train))[1],type="l",col="orange")
+h_pred_tree_2=micb_wrapper$Riskfunction(y=test$medv,f=mb_tree_2_pred)/dim(na.omit(test))[1]
+abline(h=h_pred_tree_2, col = "orange")
 
 # Add a legend to the plot
-legend(60,1900, 
-       legend=c("Own method", "Mboost using linear elements","Mboost using only own splines","Mboost using trees"),
-       col=c("red", "brown","blue","green"), 
+legend(60,80, 
+       legend=c("Own method", "Mboost using linear elements","Mboost using only own splines",
+                "Mboost using trees","Mboost using trees of depth = 2"),
+       col=c("red", "brown","blue","green","orange"), 
        lty=1:2, 
        cex=0.75)
 

@@ -1,5 +1,8 @@
 pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
   
+  oldw <- getOption("warn")
+  options(warn = -1)
+  
   data = icb_object$Data[,-1]
   feature_names = colnames(data)
   
@@ -129,4 +132,6 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     }
     
   }
+  
+  options(warn = oldw)
 }
