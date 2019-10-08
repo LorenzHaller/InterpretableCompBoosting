@@ -92,5 +92,41 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
       }
     }
     
+    if(is.factor(data_temp[,1])){
+      
+      xVals <- unique(sort(data_temp[,1]))
+      xValsN <- as.numeric(xVals)
+      ## make sure that we get the same number of values as in
+      ## x; this is only a problem if pr is equal for
+      ## different x values.
+      yVals <- unique(cbind(pr[order(data_temp[,1], na.last = NA)],
+                            sort(data_temp[,1])))[, 1]
+      
+      if (length(pr) == 1 && pr == 0) {
+        yVals <- rep(0, length(xVals))
+      }
+      plot(xValsN, yVals,
+           type = "p", xaxt = "n",
+           xlim = range(as.numeric(xVals)) + c(-0.5, 0.5)
+           ,xlab = colnames(data_temp)[1] 
+           #,ylab = yl, ylim = ylim
+           )
+      ## make sure that xaxt / axes is respected
+      print.xaxis <- TRUE
+      # if (length(list(...)) >= 1 && any(xaxis <- c("xaxt", "axes") %in% names(list(...)))) {
+      #   if (xaxis[1] && list(...)$xaxt == "n")
+      #     print.xaxis <- FALSE
+      #   if (xaxis[2] && list(...)$axes == FALSE)
+      #     print.xaxis <- FALSE
+      # }
+      if (print.xaxis)
+        axis(1, at = xValsN, labels = levels(xVals))
+      for (i in 1:length(xVals)) {
+        lines(x = rep(xValsN[i], 2) + c(-0.35, 0.35),
+              y = rep(yVals[i], 2))
+      }
+      
+    }
+    
   }
 }
