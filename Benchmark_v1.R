@@ -64,7 +64,7 @@ avg_risk_wrapper = micb_wrapper$Risk
 
 # Make predictions
 source("icb_predict_wrapper_offset.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="medv")
 avg_risk_test = pred$TestRisk
 
 # Show results in table
@@ -72,6 +72,9 @@ source("helper_functions.R")
 stage_risk(micb_object = micb_wrapper)
 stage_risk(pred_object = pred)
 
+# Visualize feature effects
+source("pdp_function.R")
+pdp_function(icb_object = micb_wrapper)
 
 # Plot number of features over time
 plot(1:length(micb_wrapper$Feature_Counter),micb_wrapper$Feature_Counter,type="l",
@@ -112,9 +115,11 @@ mb_tree_pred = mboost_tree$predict(test)
 ##### Plot the risk vs the number of iterations 
 
 plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
-     ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[[2]]),main="Own method vs mboost with different base learners")
-abline(v = micb_wrapper$`Transition Iterations`[1])
-abline(v = micb_wrapper$`Transition Iterations`[2])
+     ylim=c(0,max(micb_wrapper$Risk)),xlim=c(0,micb_wrapper$Input_Parameters[[2]]),main="Own method vs mboost with different base learners")
+abline(v = micb_wrapper$`Transition Iterations`[1]+1)
+abline(v = micb_wrapper$`Transition Iterations`[2]+1)
+abline(v = micb_wrapper$`Transition Iterations`[3]+1)
+
 points(1:length(avg_risk_test),avg_risk_test,type="b",col="red")
 
 #Mboost using linear terms

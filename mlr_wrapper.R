@@ -286,6 +286,13 @@ predictLearner.regr.icb = function (.learner, .model, .newdata, ...)
   icb_object <- .model$learner.model
   X_new <- na.omit(.newdata)
   
+  # Make one-hot encoding for factor variables
+  dummies <- dummyVars(" ~ .", data = X_new)
+  X_new <- data.frame(predict(dummies, newdata = X_new))
+  
+  # Only allow the feature which have been in the training data
+  X_new <- X_new[,which(colnames(X_new) %in% icb_object$FeatureNames)]
+  
   # Create an empty vector with the length of newdata
   prediction <- vector(mode = "numeric", length = dim(X_new)[1])
   

@@ -5,6 +5,10 @@ setwd("C:/Users/halle/Downloads/Uni/Interpretable Machine Learning/Interpretable
 library(titanic)
 data("titanic_train")
 data("titanic_test")
+
+# data_dummy = dummyVars(" ~ .", data = titanic_train)
+# trsf <- data.frame(predict(data_dummy, newdata = titanic_train))
+
 data_train = titanic_train
 data_validation = titanic_test
 

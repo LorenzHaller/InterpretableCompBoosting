@@ -9,6 +9,8 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   #X_new <- cbind(1, newdata)
   X_new <- na.omit(newdata)
   
+  
+  
   target_class <- icb_object$Input_Parameters[[5]]
   
   if(!is.null(target)){
@@ -28,6 +30,13 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
       y_int <- y 
     }
   }
+  
+  # Make one-hot encoding for factor variables
+  dummies <- dummyVars(" ~ .", data = X_new)
+  X_new <- data.frame(predict(dummies, newdata = X_new))
+  
+  # Only allow the feature which have been in the training data
+  X_new <- X_new[,which(colnames(X_new) %in% icb_object$FeatureNames)]
   
   target_class <- icb_object$Input_Parameters[[5]]
   
