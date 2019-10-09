@@ -112,7 +112,7 @@ mb_tree_2_pred = mb_tree_2$predict(test)
 
 
 
-##### VISUALISATION / COMPARISON #########################################################
+##### VISUALISATION / COMPARISON ######################################################
 
 ##### Plot the risk vs the number of iterations 
 
