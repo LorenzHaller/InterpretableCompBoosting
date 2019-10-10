@@ -1,0 +1,11 @@
+% Encoding: UTF-8
+
+@Book{molnar,
+  title     = {Interpretable Machine Learning},
+  publisher = {https://christophm.github.io/interpretable-ml-book/},
+  year      = {2018},
+  author    = {Christoph Molnar},
+  note      = {\url{https://christophm.github.io/interpretable-ml-book/}},
+}
+
+@Comment{jabref-meta: databaseType:bibtex;}
