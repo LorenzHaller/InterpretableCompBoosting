@@ -5,7 +5,8 @@ set.seed(1234)
 
 # Multiple learners to be compared
 lrns = list(makeLearner("regr.icb",par.vals = list(nu=0.1, epsilon = 0.05, bl2="btree", max_depth = 4)),
-            makeLearner("regr.gbm"), makeLearner("regr.cforest"),makeLearner("regr.crs"),
+            makeLearner("regr.gbm"), makeLearner("regr.cforest"),
+            #makeLearner("regr.crs"),
             makeLearner("regr.gamboost"), makeLearner("regr.glm"),makeLearner("regr.glmboost"),
             makeLearner("regr.lm"), makeLearner("regr.randomForest")
             )
@@ -15,24 +16,36 @@ lrns = list(makeLearner("regr.icb",par.vals = list(nu=0.1, epsilon = 0.05, bl2="
 rdesc = makeResampleDesc("Holdout")
 
 # Make a task
+## Task 1: Boston Housing
 data(BostonHousing, package = "mlbench")
 bh.task = makeRegrTask(data = BostonHousing, target = "medv")
+## Task 2: Airquality
+data("airquality")
+attach(airquality)
+airquality <- na.omit(airquality)
+oz.task = makeRegrTask(data = airquality, target = "Ozone")
+## Task 3: Wine Quality
 white <- read.csv2("http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv", dec = ".", header = TRUE) 
-wine.task <- makeRegrTask(wine, target = "quality")
+wine.task <- makeRegrTask(white, target = "quality")
 
-tasks = list(bh.task)
 
+
+oml.task_2280 = getOMLTask(2280)
+kin8nm = oml.task_2280$input$data.set$data
+kin8nm.task = makeRegrTask(data = kin8nm, target = "y")
+
+tasks = list(bh.task, oz.task, kin8nm.task)
 
 # Tasks from OpenML
-# library(OpenML)
-# 
+library(OpenML)
+
 # task = getOMLTask(10)
-# 
-# taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = 10,
-#                             number.of.instances = c(1000,10000),
-#                             number.of.features = c(5,150))
-# 
-# grid = expand.grid(task.id = taskinfo_all$task.id, 
+
+taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = 10,
+                            number.of.instances = c(1000,10000),
+                            number.of.features = c(5,150))
+
+# grid = expand.grid(task.id = taskinfo_all$task.id,
 #                    lrn.ind = seq_along(lrns))
 # 
 # runs = lapply(seq_row(grid), function(i) {
@@ -41,21 +54,21 @@ tasks = list(bh.task)
 #   ind = grid$lrn.ind[i]
 #   runTaskMlr(task, lrns[[ind]])
 # })
-# 
+
 # run = runTaskMlr(task, lrn)
 # run.id = uploadOMLRun(run)
 
 # Make benchmark
-bmr = benchmark(lrns, tasks, rdesc)
+bmr = benchmark(lrns, oml_2280.task, rdesc)
 
 
 
 
 
-getBMRAggrPerformances(bmr)
+getBMRAggrPerformances(bmr, task.ids = 'oml_2280')
 plotBMRBoxplots(bmr)
 getBMRPerformances(bmr, as.df = TRUE)
 
 
 plotBMRBoxplots(bmr, measure = mse, order.lrn = getBMRLearnerIds(bmr))
-plotBMRSummary(bmr)
+#plotBMRSummary(bmr)
