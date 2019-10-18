@@ -33,9 +33,13 @@ oml.task_2280 = getOMLTask(2280)
 kin8nm = oml.task_2280$input$data.set$data
 kin8nm.task = makeRegrTask(data = kin8nm, target = "y")
 
+## Task 4: Wine quality from Open ML
+wine.OML.task = getOMLTask(4768)
+wine_data = wine.OML.task$input$data.set$data
+wine.task = makeRegrTask(data = wine_data, target = "quality")
 
 # Create list of all tasks
-tasks = list(bh.task, oz.task, kin8nm.task)
+tasks = list(bh.task, oz.task, kin8nm.task, wine.task)
 
 
 
@@ -57,7 +61,7 @@ taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = 10,
 # run.id = uploadOMLRun(run)
 
 # Make benchmark
-bmr = benchmark(lrns, oml_2280.task, rdesc)
+bmr = benchmark(lrns, wine.task, rdesc)
 
 
 

@@ -1,5 +1,7 @@
 # Build an mlr wrapper around the function in order to make benchmarking easier
 
+# Regression learner
+
 makeRLearner.regr.icb = function() {
   makeRLearnerRegr(
     cl = "regr.icb",
@@ -361,3 +363,30 @@ predictLearner.regr.icb = function (.learner, .model, .newdata, ...)
   
   return(as.numeric(prediction_tree_max))
 }
+
+
+
+
+#####
+
+# Classification learner
+
+
+makeRLearner.classif.icb = function() {
+  makeRLearnerClassif(
+    cl = "classif.icb",
+    package = c("mboost","partykit","caret"),
+    par.set = makeParamSet(
+      makeNumericLearnerParam(id = "nu", lower = 0, upper = 1, default = 0.1),
+      makeNumericLearnerParam(id = "epsilon", lower = 0, upper = 1, default = 0.005),
+      makeDiscreteLearnerParam(id = "bl2", default = "bbs", values = c("bbs","btree")),
+      makeIntegerLearnerParam(id = "max_depth", default = 8L)
+    ),
+    properties = c("twoclass","numerics", "factors","prob"),
+    name = "Gradually interpretable component-wise boosting",
+    short.name = "icb.classif",
+    note = ""
+  )
+}
+
+
