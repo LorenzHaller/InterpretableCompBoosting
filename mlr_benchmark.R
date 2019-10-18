@@ -1,5 +1,6 @@
 # Mlr benchmark for regression
 library(mlr)
+library(OpenML)
 source("mlr_wrapper.R")
 set.seed(1234)
 
@@ -16,30 +17,27 @@ lrns = list(makeLearner("regr.icb",par.vals = list(nu=0.1, epsilon = 0.05, bl2="
 rdesc = makeResampleDesc("Holdout")
 
 # Make a task
+
 ## Task 1: Boston Housing
 data(BostonHousing, package = "mlbench")
 bh.task = makeRegrTask(data = BostonHousing, target = "medv")
+
 ## Task 2: Airquality
 data("airquality")
 attach(airquality)
 airquality <- na.omit(airquality)
 oz.task = makeRegrTask(data = airquality, target = "Ozone")
-## Task 3: Wine Quality
-white <- read.csv2("http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv", dec = ".", header = TRUE) 
-wine.task <- makeRegrTask(white, target = "quality")
 
-
-
+## Task 3: kin8nm from Open ML
 oml.task_2280 = getOMLTask(2280)
 kin8nm = oml.task_2280$input$data.set$data
 kin8nm.task = makeRegrTask(data = kin8nm, target = "y")
 
+
+# Create list of all tasks
 tasks = list(bh.task, oz.task, kin8nm.task)
 
-# Tasks from OpenML
-library(OpenML)
 
-# task = getOMLTask(10)
 
 taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = 10,
                             number.of.instances = c(1000,10000),
