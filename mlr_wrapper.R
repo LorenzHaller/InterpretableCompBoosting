@@ -390,3 +390,65 @@ makeRLearner.classif.icb = function() {
 }
 
 
+trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, ...) 
+{
+  formula = getTaskFormula(.task)
+  data = getTaskData(.task, .subset)
+  
+  nu <- .learner$par.vals$nu
+  epsilon <- .learner$par.vals$epsilon
+  bl2 <- .learner$par.vals$bl2
+  max_depth <- .learner$par.vals$max_depth
+  
+  # Preparing the formula and data by seperating the target(y) and the features(X)
+  data <- na.omit(data)
+  
+  # Get the target
+  target <- all.vars(formula)[1]
+  
+  # Create a list of all features names as specified in the formula
+  all_vars <- all.vars(formula)
+  if(all_vars[2] != "."){
+    data <- data[,colnames(data) %in% all_vars]
+  }
+  
+  # Make one-hot encoding for factor variables
+  dummies <- dummyVars(" ~ .", data = data)
+  data <- data.frame(predict(dummies, newdata = data))
+  
+  # Create mlr task to get full formula
+  formula <- as.formula(paste(target,"~ ."))
+  
+  # Save feature names of one-hot-encoded data
+  f_names <- colnames(data)[- which(colnames(data) == target)]
+  
+  # Create the feature matrix
+  X <- model.matrix(formula, data)
+  
+  
+  y <- data[, target]
+  y_int <- y
+  
+  # Load the gradient and risk function (using the mboost family.R code)
+  family = Gaussian()
+  ngradient <- family@ngradient
+  riskfct <- family@risk
+  
+  # Initialize with Intercept model (similar to family@offset(y))
+  intercept_model <- lm.fit(x=as.matrix(X[,1]), y=y)
+  fit_0 <- intercept_model$fitted.values
+  fitted_values <- fit_0
+  
+  #Calculate the risk of the intercept model
+  risk_0 <- riskfct(y = y_int, f = fitted_values)
+  
+  # Create a counter for how many features are in the model
+  feature_counter <- numeric()
+  feature_counter[1] <- 0
+  feature_list <- c()
+  
+  
+
+
+  
+}
