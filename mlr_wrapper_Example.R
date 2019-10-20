@@ -1,4 +1,4 @@
-# Applying the mlr wrapper
+# Applying the mlr wrapper for regression
 
 source("mlr_wrapper.R")
 
@@ -20,3 +20,23 @@ mod.icb = mlr::train(regr.icb, task = regr.task, subset = train.set)
 
 pred.icb = predict(mod.icb, task = regr.task, subset = test.set)
 
+
+
+
+# Apply the mlr wrapper for a classification task
+
+data(BreastCancer, package = "mlbench")
+df = BreastCancer
+df$Id = NULL
+df = na.omit(df)
+
+
+classif.task = makeClassifTask(id = "BreastCancer", data = df, target = "Class")
+
+n.classif = getTaskSize(classif.task)
+train.set.classif = seq(1, n.classif, by = 2)
+test.set.classif = seq(2, n.classif, by = 2)
+
+classif.icb = makeLearner("classif.icb",par.vals = list(nu=0.1, epsilon = 0.05, bl2="btree", max_depth = 4))
+
+mod.icb.classif = mlr::train(classif.icb, task = classif.task, subset = train.set.classif)
