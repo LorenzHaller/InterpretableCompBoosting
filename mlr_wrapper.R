@@ -685,3 +685,104 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   
 
 }
+
+
+
+
+
+
+
+predictLearner.classif.icb = function (.learner, .model, .newdata, ...) 
+{
+  icb_object <- .model$learner.model
+  X_new <- na.omit(.newdata)
+  
+  # Make one-hot encoding for factor variables
+  dummies <- dummyVars(" ~ .", data = X_new)
+  X_new <- data.frame(predict(dummies, newdata = X_new))
+  
+  # Only allow the feature which have been in the training data
+  X_new <- X_new[,which(colnames(X_new) %in% icb_object$FeatureNames)]
+  
+  # Create an empty vector with the length of newdata
+  prediction <- vector(mode = "numeric", length = dim(X_new)[1])
+  
+  # Fill every entry with the intercept of the model
+  for (l in 1:length(prediction)){
+    prediction[l] <- icb_object$Prediction_Models$Linear$offset[[1]]
+  }
+  
+  # Offset prediction
+  prediction_offset <- prediction
+  
+  
+  iteration <- 1
+  
+  
+  ################# For the linear part: #####################################################
+  
+  while(iteration <= (icb_object$`Transition Iterations`[1])){
+    
+    pred_iteration <- icb_object$Prediction_Models$Linear[iteration]$predict(newdata = X_new)
+    
+    iteration <- iteration + 1
+    
+  }
+  
+  # Save the predictions after the linear part
+  prediction_linear <- prediction_offset + pred_iteration
+  
+  
+  ###################### For the splines part: ###############################################
+  
+  while(iteration <= (icb_object$`Transition Iterations`[2])){
+    
+    pred_iteration <- icb_object$Prediction_Models$Spline[iteration - icb_object$`Transition Iterations`[1]]$predict(newdata = X_new)
+    
+    iteration <- iteration + 1
+  }
+  
+  prediction_spline <- prediction_linear + pred_iteration
+  
+  
+  
+  # #################### For the tree (depth=2) part: ##########################################
+  
+  while(iteration <= (icb_object$`Transition Iterations`[3])){
+    
+    pred_iteration <- icb_object$Prediction_Models$Tree[iteration - icb_object$`Transition Iterations`[2]]$predict(newdata = X_new)
+    
+    iteration <- iteration + 1
+  }
+  
+  prediction_tree <- prediction_spline + pred_iteration
+  
+  
+  #################  For the tree (depth via user input) part: ####################################
+  
+  while(iteration < length(icb_object$Risk)){
+    
+    pred_iteration <- icb_object$Prediction_Models$TreeMax[iteration - icb_object$`Transition Iterations`[3]]$predict(newdata = X_new)
+    
+    iteration <- iteration + 1
+  }
+  
+  
+  prediction_tree_max <- prediction_tree + pred_iteration
+  
+  levels <- c(icb_object$Input_Parameters[6],icb_object$Input_Parameters[7])
+  
+  prediction_label <- numeric(length(prediction_tree_max))
+  
+  for(i in 1:length(prediction_tree_max)){
+    if(prediction_tree_max[i] < 0){
+      prediction_label[i] <- levels[[1]]
+    } else{
+      prediction_label[i] <- levels[[2]]
+    }
+  }
+  
+  
+  
+  return(as.factor(prediction_label))
+}

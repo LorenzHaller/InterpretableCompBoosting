@@ -40,3 +40,5 @@ test.set.classif = seq(2, n.classif, by = 2)
 classif.icb = makeLearner("classif.icb",par.vals = list(nu=0.1, epsilon = 0.05, bl2="btree", max_depth = 4))
 
 mod.icb.classif = mlr::train(classif.icb, task = classif.task, subset = train.set.classif)
+
+pred.icb = predict(mod.icb.classif, task = classif.task, subset = test.set.classif)
