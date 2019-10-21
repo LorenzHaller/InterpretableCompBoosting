@@ -7,16 +7,21 @@ set.seed(177)
 
 
 # Multiple learners to be compared
-lrns = list(makeLearner("regr.icb",par.vals = list(nu=0.1, epsilon = 0.05, bl2="btree", max_depth = 4)),
-            makeLearner("regr.gbm"), makeLearner("regr.cforest"),
-            #makeLearner("regr.crs"),
-            makeLearner("regr.gamboost"), makeLearner("regr.glm"),makeLearner("regr.glmboost"),
-            makeLearner("regr.lm"), makeLearner("regr.randomForest")
+lrns = list(makeLearner("regr.icb",par.vals = list(nu=0.1, epsilon = 0.005, bl2="btree", max_depth = 4)),
+            makeLearner("regr.lm"),
+            makeLearner("regr.gamboost"),
+            makeLearner("regr.glmboost"),
+            makeLearner("regr.rpart"),
+            makeLearner("regr.gbm"),
+            makeLearner("regr.svm"),
+            makeLearner("regr.randomForest")
+            #,makeLearner("regr.xgboost")
             )
 
 
 # Choose the resampling strategy
 rdesc = makeResampleDesc("Holdout")
+rdesc_v2 = makeResampleDesc("CV",iters=5)
 
 # Make a task
 
@@ -40,8 +45,13 @@ wine.OML.task = getOMLTask(4768)
 wine_data = wine.OML.task$input$data.set$data
 wine.task = makeRegrTask(data = wine_data, target = "quality")
 
+## Task 5: puma8NH
+puma.OML.task = getOMLTask(2313)
+puma8NH = puma.OML.task$input$data.set$data
+puma.task = makeRegrTask(data = puma8NH, target = "thetadd3")
+
 # Create list of all tasks
-tasks = list(bh.task, oz.task, kin8nm.task, wine.task)
+tasks = list(bh.task, oz.task, kin8nm.task, wine.task, puma.task)
 
 
 
@@ -93,7 +103,7 @@ icb_list_3 = list(icb.learner2,icb.learner3,icb.learner4,
                   icb.learner10,icb.learner11,icb.learner12)
 
 # Make benchmark
-bmr = benchmark(icb_list_3, wine.task, rdesc)
+bmr = benchmark(lrns, oz.task, rdesc_v2)
 
 
 
