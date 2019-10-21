@@ -67,24 +67,33 @@ icb.learner1 = makeLearner("regr.icb",id="btree_0.1_0.025",par.vals = list(nu=0.
 icb.learner2 = makeLearner("regr.icb",id="btree_0.1_0.01",par.vals = list(nu=0.1, epsilon = 0.01, bl2="btree", max_depth = 4))
 icb.learner3 = makeLearner("regr.icb",id="btree_0.1_0.005",par.vals = list(nu=0.1, epsilon = 0.005, bl2="btree", max_depth = 4))
 icb.learner4 = makeLearner("regr.icb",id="btree_0.1_0.001",par.vals = list(nu=0.1, epsilon = 0.001, bl2="btree", max_depth = 4))
+icb.learner4.1 = makeLearner("regr.icb",id="btree_0.1_0.0005",par.vals = list(nu=0.1, epsilon = 0.0005, bl2="btree", max_depth = 4))
+
 
 icb.learner5 = makeLearner("regr.icb",id="btree_0.05_0.05",par.vals = list(nu=0.05, epsilon = 0.05, bl2="btree", max_depth = 4))
 icb.learner6 = makeLearner("regr.icb",id="btree_0.05_0.025",par.vals = list(nu=0.05, epsilon = 0.025, bl2="btree", max_depth = 4))
 icb.learner7 = makeLearner("regr.icb",id="btree_0.05_0.01",par.vals = list(nu=0.05, epsilon = 0.01, bl2="btree", max_depth = 4))
 icb.learner8 = makeLearner("regr.icb",id="btree_0.05_0.005",par.vals = list(nu=0.05, epsilon = 0.005, bl2="btree", max_depth = 4))
 icb.learner9 = makeLearner("regr.icb",id="btree_0.05_0.001",par.vals = list(nu=0.05, epsilon = 0.001, bl2="btree", max_depth = 4))
+icb.learner9.1 = makeLearner("regr.icb",id="btree_0.05_0.0005",par.vals = list(nu=0.05, epsilon = 0.0005, bl2="btree", max_depth = 4))
 
 
-icb.learner10 = makeLearner("regr.icb",id="bbs_0.1_0.05",par.vals = list(nu=0.1, epsilon = 0.05, bl2="bbs", max_depth = 4))
+icb.learner10 = makeLearner("regr.icb",id="bbs_0.1_0.01",par.vals = list(nu=0.1, epsilon = 0.01, bl2="bbs", max_depth = 4))
+icb.learner11 = makeLearner("regr.icb",id="bbs_0.1_0.005",par.vals = list(nu=0.1, epsilon = 0.005, bl2="bbs", max_depth = 4))
+icb.learner12 = makeLearner("regr.icb",id="bbs_0.1_0.001",par.vals = list(nu=0.1, epsilon = 0.001, bl2="bbs", max_depth = 4))
 
 
 icb_list = list(icb.learner0,icb.learner1,icb.learner2,icb.learner3,icb.learner4,
-                icb.learner5,icb.learner6,icb.learner7,icb.learner8,icb.learner9
-                #,icb.learner10
-                )
+                icb.learner5,icb.learner6,icb.learner7,icb.learner8,icb.learner9)
+
+icb_list_2 = list(icb.learner2,icb.learner3,icb.learner4,icb.learner4.1,
+                  icb.learner7,icb.learner8,icb.learner9,icb.learner9.1)
+
+icb_list_3 = list(icb.learner2,icb.learner3,icb.learner4,
+                  icb.learner10,icb.learner11,icb.learner12)
 
 # Make benchmark
-bmr = benchmark(icb_list, wine.task, rdesc)
+bmr = benchmark(icb_list_3, wine.task, rdesc)
 
 
 
