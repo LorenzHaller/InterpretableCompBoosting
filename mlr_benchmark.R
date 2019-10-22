@@ -14,8 +14,8 @@ lrns = list(makeLearner("regr.icb",par.vals = list(nu=0.1, epsilon = 0.005, bl2=
             makeLearner("regr.rpart"),
             makeLearner("regr.gbm"),
             makeLearner("regr.svm"),
-            makeLearner("regr.randomForest")
-            #,makeLearner("regr.xgboost")
+            makeLearner("regr.randomForest"),
+            makeLearner("regr.xgboost")
             )
 
 
@@ -103,7 +103,7 @@ icb_list_3 = list(icb.learner2,icb.learner3,icb.learner4,
                   icb.learner10,icb.learner11,icb.learner12)
 
 # Make benchmark
-bmr = benchmark(lrns, oz.task, rdesc_v2)
+bmr = benchmark(lrns, puma.task, rdesc_v2)
 
 
 
