@@ -96,3 +96,45 @@ stage_risk <- function(micb_object = NULL, pred_object = NULL){
 }
 
 
+# Create a function for defaults plots
+
+plot.icb = function(micb_object = NULL, predict_object = NULL, fcount = FALSE,
+                    col1 = "red", col2 = "blue"){
+  
+  if(is.null(micb_object)){
+    stop("No icb object to plot for!")
+  }
+  
+  
+  # Plot number of features over time
+  par(mar = c(5, 5, 3, 5))
+  plot(1:length(micb_object$Risk),micb_object$Risk, xlab="Iteration",
+       ylab="Mean Squared Error",col=col1,type="l", 
+       ylim=c(0,max(micb_object$Risk)),xlim=c(0,micb_object$Input_Parameters[[2]]),
+       main="MSE vs Iterations")
+  
+  # Add vertical lines where the stages change
+  abline(v = micb_object$`Transition Iterations`[1]+1)
+  abline(v = micb_object$`Transition Iterations`[2]+1)
+  abline(v = micb_object$`Transition Iterations`[3]+1)
+  
+  # Add line for predictions if available
+  if(!is.null(predict_object)){
+    points(1:length(predict_object$TestRisk),predict_object$TestRisk,type="l",col="blue")
+    legend("top", c("Train", "Test"),
+           col = c("red", "blue"), lty = c(1, 2),cex=0.7)
+  }
+  
+  # Add visualisation for the number of features used by the model
+  if(fcount == TRUE){
+    par(new = TRUE)
+    plot(1:length(micb_object$Feature_Counter),micb_object$Feature_Counter,
+         type = "l", xaxt = "n", yaxt = "n",
+         ylab = "", xlab = "")
+    axis(side = 4)
+    mtext("Number of features", side = 4, line = 3)
+    
+  }
+  
+}
+

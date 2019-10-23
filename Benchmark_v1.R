@@ -34,38 +34,20 @@ test  <- data[-sample, ]
 source("family.R")
 
 
-### SET PARAMETERS ###################################################################
-
-mstop_bm = 300
-nu_bm = 0.05
 
 
 ##### MODEL TRAINING #################################################################
-
-## OWN METHOD ########################################################################
-# source("linearmodels_splines_trees_mboost.R")
-# micb_500 = interpretable_comp_boost_m(train, formula, nu=nu_bm, mstop=mstop_bm, 
-#                                       family=Gaussian(),epsilon = 0.001)
-# avg_risk = micb_500$Risk / dim(train)[1]
-# 
-# # Make predictions
-# source("icb_predict.R")
-# pred = icb_predict(icb_object = micb_500, newdata = test, target="Ozone")
-# 
-# risk_test = pred$TestRisk / dim(test)[1]
 
 
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
                                             target_class = "Gaussian", bl2 = "btree",
-                                            epsilon = 0.001)
-avg_risk_wrapper = micb_wrapper$Risk
+                                            epsilon = 0.005)
 
 # Make predictions
 source("icb_predict_wrapper_offset.R")
 pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="medv")
-avg_risk_test = pred$TestRisk
 
 # Show results in table
 source("helper_functions.R")
@@ -77,12 +59,19 @@ source("pdp_function.R")
 pdp_function(icb_object = micb_wrapper)
 
 # Plot number of features over time
-plot(1:length(micb_wrapper$Feature_Counter),micb_wrapper$Feature_Counter,type="l",
-     ylab="Number of features",xlab="Iterations")
+source("helper_functions.R")
+plot.icb(micb_object = micb_wrapper, predict_object = pred, fcount = T)
+  
+  
 
 
 
 ## MBOOST METHODS #######################################################################
+
+### SET PARAMETERS ###################################################################
+
+mstop_bm = 300
+nu_bm = 0.05
 
 library(mboost)
 # Mboost with linear terms
@@ -104,11 +93,11 @@ feature_string <- paste(colnames(train)[- which(colnames(train) %in% target)], c
 tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
 tree_formula <- as.formula(tree_formula)
 mb_tree_2 = mboost::mboost(formula = tree_formula,
-                 data = train, family = family,
+                 data = train, 
                  control = boost_control(nu = nu_bm, mstop = mstop_bm))
-#plot(mb_tree_2)
+plot(mb_tree_2)
 mb_tree_2_pred = mb_tree_2$predict(test)
-# environment(mb_tree_2$fitted)$ens[[1]]
+environment(mb_tree_2$fitted)$ens[[1]]
 
 
 
@@ -121,7 +110,6 @@ plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Averag
 abline(v = micb_wrapper$`Transition Iterations`[1]+1)
 abline(v = micb_wrapper$`Transition Iterations`[2]+1)
 abline(v = micb_wrapper$`Transition Iterations`[3]+1)
-
 points(1:length(avg_risk_test),avg_risk_test,type="b",col="red")
 
 #Mboost using linear terms
