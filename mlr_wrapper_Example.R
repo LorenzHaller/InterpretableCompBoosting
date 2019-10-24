@@ -21,6 +21,13 @@ mod.icb = mlr::train(regr.icb, task = regr.task, subset = train.set)
 pred.icb = predict(mod.icb, task = regr.task, subset = test.set)
 
 
+# Create partial dependence plots with mlr
+pd = generatePartialDependenceData(mod.icb, regr.task, "lstat")
+pd.lst = generatePartialDependenceData(mod.icb, regr.task, c("tax", "lstat"), TRUE)
+
+plotPartialDependence(pd.lst, facet = "tax")
+
+
 
 
 # Apply the mlr wrapper for a classification task
