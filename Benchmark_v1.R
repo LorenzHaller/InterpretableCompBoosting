@@ -60,7 +60,8 @@ pdp_function(icb_object = micb_wrapper)
 
 # Plot number of features over time
 source("helper_functions.R")
-plot.icb(micb_object = micb_wrapper, predict_object = pred, fcount = T)
+plot.icb(micb_object = micb_wrapper, predict_object = pred, fcount = T,
+         data_name = "Boston Housing")
   
   
 
