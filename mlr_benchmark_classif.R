@@ -23,7 +23,7 @@ lrns.classif = list(makeLearner("classif.icb",par.vals = list(nu=0.1, epsilon = 
 
 
 # Choose the resampling strategy
-rdesc = makeResampleDesc("Holdout")
+rdesc = makeResampleDesc("CV",iters=5)
 
 # Make a task
 
