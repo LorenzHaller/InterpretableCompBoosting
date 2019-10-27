@@ -27,7 +27,7 @@ rdesc = makeResampleDesc("CV",iters=5)
 
 # Make a task
 
-taskinfo_all_classif = listOMLTasks(task.type = "Supervised Classification", limit = 10,
+taskinfo_all_classif = listOMLTasks(task.type = "Supervised Classification", limit = 20,
                             number.of.instances = c(1000,100000),
                             number.of.features = c(5,150), number.of.classes = 2)
 taskinfo_all_classif
@@ -44,8 +44,13 @@ electricity.OML.task = getOMLTask(219)
 electricity = na.omit(electricity.OML.task$input$data.set$data)
 electricity.task = makeClassifTask(data = electricity, target = "class")
 
+# Task 4: BNG id 322
+bng.OML.task = getOMLTask(206)
+bng = na.omit(bng.OML.task$input$data.set$data)
+bng.task = makeClassifTask(data = bng, target = "Class")
+
 # Make benchmark
-bmr.classif = benchmark(lrns.classif, electricity.task, rdesc_v2)
+bmr.classif = benchmark(lrns.classif, bng.task, rdesc_v2)
 
 
 getBMRAggrPerformances(bmr.classif)
