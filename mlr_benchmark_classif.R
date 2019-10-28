@@ -27,7 +27,7 @@ rdesc = makeResampleDesc("CV",iters=5)
 
 # Make a task
 
-taskinfo_all_classif = listOMLTasks(task.type = "Supervised Classification", limit = 20,
+taskinfo_all_classif = listOMLTasks(task.type = "Supervised Classification", limit = 50,
                             number.of.instances = c(1000,100000),
                             number.of.features = c(5,150), number.of.classes = 2)
 taskinfo_all_classif
@@ -49,10 +49,18 @@ bng.OML.task = getOMLTask(206)
 bng = na.omit(bng.OML.task$input$data.set$data)
 bng.task = makeClassifTask(data = bng, target = "Class")
 
+# Task 5: adult (2071)
+mammo.OML.task = getOMLTask(3048)
+mammo = na.omit(mammo.OML.task$input$data.set$data)
+mammo.task = makeClassifTask(data = mammo, target = "class")
+
+
 # Make benchmark
-bmr.classif = benchmark(lrns.classif, bng.task, rdesc_v2)
+bmr.classif = benchmark(lrns.classif, mammo.task, rdesc_v2)
 
 
 getBMRAggrPerformances(bmr.classif)
-plotBMRBoxplots(bmr.classif,pretty.names = F)
+plt = plotBMRBoxplots(bmr.classif,pretty.names = F)
+#levels(plt$data$learner.id) = c("LDA", "CART", "RF")
+plt + theme(axis.text.x = element_text(angle = -75))
 getBMRPerformances(bmr.classif, as.df = TRUE)
