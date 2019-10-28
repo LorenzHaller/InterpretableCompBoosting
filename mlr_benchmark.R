@@ -103,7 +103,7 @@ icb_list_3 = list(icb.learner2,icb.learner3,icb.learner4,
                   icb.learner10,icb.learner11,icb.learner12)
 
 # Make benchmark
-bmr = benchmark(lrns, bh.task, rdesc_v2)
+bmr = benchmark(icb_list_3, bh.task, rdesc_v2)
 
 
 
