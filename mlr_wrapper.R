@@ -9,7 +9,7 @@ makeRLearner.regr.icb = function() {
     par.set = makeParamSet(
       makeNumericLearnerParam(id = "nu", lower = 0, upper = 1, default = 0.1),
       makeNumericLearnerParam(id = "epsilon", lower = 0, upper = 1, default = 0.005),
-      makeDiscreteLearnerParam(id = "bl2", default = "bbs", values = c("bbs","btree")),
+      makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("bbs","btree")),
       makeIntegerLearnerParam(id = "max_depth", default = 8L)
     ),
     properties = c("numerics", "factors"),
@@ -379,7 +379,7 @@ makeRLearner.classif.icb = function() {
     par.set = makeParamSet(
       makeNumericLearnerParam(id = "nu", lower = 0, upper = 1, default = 0.1),
       makeNumericLearnerParam(id = "epsilon", lower = 0, upper = 1, default = 0.005),
-      makeDiscreteLearnerParam(id = "bl2", default = "bbs", values = c("bbs","btree")),
+      makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("bbs","btree")),
       makeIntegerLearnerParam(id = "max_depth", default = 8L)
     ),
     properties = c("twoclass","numerics", "factors","prob","ordered"),

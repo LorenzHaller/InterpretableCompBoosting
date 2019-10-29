@@ -6,6 +6,33 @@ set.seed(177)
 
 
 
+# Hypertuning for the parameters epsilon and nu
+
+num_ps = makeParamSet(
+  makeNumericParam("nu", lower = 0.001, upper = 0.2),
+  makeNumericParam("epsilon", lower = 0.00001, upper = 0.1),
+  makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("bbs","btree"), tunable = F),
+  makeIntegerLearnerParam(id = "max_depth", default = 8L, lower = 3, upper = 30, tunable = F)
+)
+print(num_ps)
+
+#ctrl = makeTuneControlGrid(resolution = 15L)
+ctrl = makeTuneControlRandom(maxit = 100L)
+
+rdesc_tune = makeResampleDesc("CV", iters = 3L)
+
+
+# Tuning for the airquality task
+res = tuneParams("regr.icb", task = oz.task, resampling = rdesc_tune,
+                 par.set = num_ps, control = ctrl)
+res
+# Op. pars: nu=0.169; epsilon=0.00172; bl2=btree; max_depth=24
+
+lrn.icb = setHyperPars(makeLearner("regr.icb"), nu = res$x$nu, epsilon = res$x$epsilon,
+                       bl2 = "btree", max_depth = 4L)
+lrn.icb
+
+
 # Multiple learners to be compared
 lrns = list(makeLearner("regr.icb",par.vals = list(nu=0.1, epsilon = 0.005, bl2="btree", max_depth = 4)),
             makeLearner("regr.lm"),
@@ -21,7 +48,7 @@ lrns = list(makeLearner("regr.icb",par.vals = list(nu=0.1, epsilon = 0.005, bl2=
 
 # Choose the resampling strategy
 rdesc = makeResampleDesc("Holdout")
-rdesc_v2 = makeResampleDesc("CV",iters=5)
+rdesc_v2 = makeResampleDesc("CV",iters=10)
 
 # Make a task
 
@@ -102,8 +129,10 @@ icb_list_2 = list(icb.learner2,icb.learner3,icb.learner4,icb.learner4.1,
 icb_list_3 = list(icb.learner2,icb.learner3,icb.learner4,
                   icb.learner10,icb.learner11,icb.learner12)
 
+oz.list = list(lrn.icb, makeLearner("regr.randomForest"))
+
 # Make benchmark
-bmr = benchmark(icb_list_3, bh.task, rdesc_v2)
+bmr = benchmark(oz.list, oz.task, rdesc_v2)
 
 
 
