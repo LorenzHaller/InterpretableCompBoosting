@@ -1,4 +1,6 @@
-# Mlr benchmark for regression
+################## Mlr benchmark for regression ###############################
+
+
 library(mlr)
 library(OpenML)
 source("mlr_wrapper.R")
@@ -6,7 +8,15 @@ set.seed(177)
 #devtools::install_github("jakob-r/mlrHyperopt", dependencies = TRUE)
 library(mlrHyperopt)
 
+
+
+
 ###### Find a list of tasks for the benchmark #############################
+
+
+taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = 10,
+                            number.of.instances = c(1000,10000),
+                            number.of.features = c(5,150))
 
 
 ## Task 1: Boston Housing
@@ -39,15 +49,12 @@ tasks = list(bh.task, oz.task, kin8nm.task, wine.task, puma.task)
 
 
 
-taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = 10,
-                            number.of.instances = c(1000,10000),
-                            number.of.features = c(5,150))
 
 
 
 
 
-####### Hypetuning Part ##################################################
+####### Hyperparametertuning Part ##################################################
 
 tsk = oz.task
 ctrl = makeTuneControlRandom(maxit = 100L)
@@ -75,59 +82,87 @@ lrn.icb
 
 
 
-# Tuning for randomForest
-params <- makeParamSet(makeIntegerParam("mtry",lower = 2,upper = 5),
-                       makeIntegerParam("nodesize",lower = 5,upper = 50),
-                       makeIntegerParam("ntree", lower = 100, upper = 1000))
-
-res_rf = tuneParams("regr.randomForest", task = oz.task, resampling = rdesc_tune,
-                 par.set = params, control = ctrl)
+# # Tuning for randomForest
+# params <- makeParamSet(makeIntegerParam("mtry",lower = 2,upper = 5),
+#                        makeIntegerParam("nodesize",lower = 5,upper = 50),
+#                        makeIntegerParam("ntree", lower = 100, upper = 1000))
+# 
+# res_rf = tuneParams("regr.randomForest", task = tsk, resampling = rdesc_tune,
+#                  par.set = params, control = ctrl)
 
 
 # Tuning for gamboost
 params_gamboost <- makeParamSet(makeIntegerParam("mstop", lower = 50, upper = 1000),
                                 makeNumericParam("nu", lower = 0.01, upper = 0.2))
 
-res_rf = tuneParams("regr.gamboost", task = oz.task, resampling = rdesc_tune,
+res_gamb = tuneParams("regr.gamboost", task = tsk, resampling = rdesc_tune,
                     par.set = params_gamboost, control = ctrl)
+
+regr.gamboost = setHyperPars(makeLearner("regr.gamboost"), mstop = res_gamb$x$mstop, 
+                             nu = res_gamb$x$nu)
 #Op. pars: mstop=61; nu=0.164  
-  
-# Multiple learners to be compared
-lrns_regr = list(makeLearner("regr.gamboost"),
-            makeLearner("regr.glmboost"),
-            makeLearner("regr.rpart"),
-            makeLearner("regr.svm"),
-            makeLearner("regr.randomForest"),
-            makeLearner("regr.xgboost")
-            )
 
-getParamSet(makeLearner("regr.lm"))
 
-library(mlrHyperopt)
-res_xgb = hyperopt(oz.task, learner = "regr.xgboost")
+# Tuning for glmboost
+res_glmb = hyperopt(tsk, learner = "regr.glmboost")
+regr.glmboost = setHyperPars(makeLearner("regr.glmboost"), mstop = res_glmb$x$mstop,
+                             nu = res_glmb$x$nu) 
+
+# Tuning for an rpart tree
+res_rpart = hyperopt(tsk, learner = "regr.rpart")
+regr.rpart = setHyperPars(makeLearner("regr.rpart"), cp = res_rpart$x$cp,
+                          maxdepth = res_rpart$x$maxdepth, minbucket = res_rpart$x$minbucket,
+                          minsplit = res_rpart$x$minsplit)
+
+# Tuning for SVM
+res_svm = hyperopt(tsk, learner = "regr.svm")
+regr.svm = setHyperPars(makeLearner("regr.svm"), cost = res_svm$x$cost,
+                        gamma = res_svm$x$gamma) 
+
+# Tuning for Random Forest
+res_rf = hyperopt(tsk, learner = "regr.randomForest")
+regr.rf = setHyperPars(makeLearner("regr.randomForest"), nodesize = res_rf$x$nodesize,
+                       mtry = res_rf$x$mtry)
+
+# Tuning for xgboost
+res_xgb = hyperopt(tsk, learner = "regr.xgboost")
+regr.xgboost = setHyperPars(makeLearner("regr.xgboost"), nrounds = res_xgb$x$nrounds,
+                            max_depth = res_xgb$x$max_depth,
+                            eta = res_xgb$x$eta,
+                            gamma = res_xgb$x$gamma,
+                            colsample_bytree = res_xgb$x$colsample_bytree,
+                            min_child_weight = res_xgb$x$min_child_weight,
+                            subsample = res_xgb$x$subsample)
+
+
+# Extract the parameters from a single learner
+getParamSet(makeLearner("regr.svm"))
+
+
+
 #Tune result:
 # Op. pars: nrounds=211; max_depth=9; eta=0.237; gamma=4.21; 
 # colsample_bytree=0.469; min_child_weight=0.774; subsample=0.61
 res
 
 
-rr = makeResampleDesc('CV', stratify = TRUE, iters = 10)
-
-lrns.tuned = lapply(lrns_regr, function(lrn) {
-  if (getLearnerName(lrn) == "xgboost") {
-    # for xgboost we download a custom ParConfig from the Database
-    pcs = downloadParConfigs(learner.name = getLearnerName(lrn))
-    pc = pcs[[1]]
-  } else {
-    pc = getDefaultParConfig(learner = lrn)
-  }
-  ps = getParConfigParSet(pc)
-  # some parameters are dependend on the data (eg. the number of columns)
-  ps = evaluateParamExpressions(ps, dict = mlrHyperopt::getTaskDictionary(task = tsk))
-  lrn = setHyperPars(lrn, par.vals = getParConfigParVals(pc))
-  ctrl = makeTuneControlRandom(maxit = 20)
-  makeTuneWrapper(learner = lrn, resampling = rr, par.set = ps, control = ctrl)
-})
+# rr = makeResampleDesc('CV', stratify = TRUE, iters = 10)
+# 
+# lrns.tuned = lapply(lrns_regr, function(lrn) {
+#   if (getLearnerName(lrn) == "xgboost") {
+#     # for xgboost we download a custom ParConfig from the Database
+#     pcs = downloadParConfigs(learner.name = getLearnerName(lrn))
+#     pc = pcs[[1]]
+#   } else {
+#     pc = getDefaultParConfig(learner = lrn)
+#   }
+#   ps = getParConfigParSet(pc)
+#   # some parameters are dependend on the data (eg. the number of columns)
+#   ps = evaluateParamExpressions(ps, dict = mlrHyperopt::getTaskDictionary(task = tsk))
+#   lrn = setHyperPars(lrn, par.vals = getParConfigParVals(pc))
+#   ctrl = makeTuneControlRandom(maxit = 20)
+#   makeTuneWrapper(learner = lrn, resampling = rr, par.set = ps, control = ctrl)
+# })
 
 
 
@@ -174,24 +209,27 @@ rdesc_v2 = makeResampleDesc("CV",iters=10)
 
 
 
-oz.list = list(lrn.icb,
+lrn.list = list(lrn.icb,
                makeLearner("regr.lm"),
-               makeLearner("regr.randomForest", 
-                           par.vals = list(mtry = res_rf$x$mtry,nodesize = res_rf$x$nodesize, ntree = res_rf$x$ntree)),
-)
+               regr.gamboost,
+               regr.glmboost,
+               regr.rpart,
+               regr.svm,
+               regr.rf,
+               regr.xgboost)
 
 
 
 
 ################ Make benchmark #########################################################
-bmr = benchmark(oz.list, oz.task, rdesc_v2)
+bmr = benchmark(lrn.list, tsk, rdesc_v2)
 
 
 
 ## Visualize benchmark results ##################################
 
 getBMRAggrPerformances(bmr)
-plotBMRBoxplots(bmr,pretty.names = F)
+plotBMRBoxplots(bmr,pretty.names = T)
 getBMRPerformances(bmr, as.df = TRUE)
 
 
