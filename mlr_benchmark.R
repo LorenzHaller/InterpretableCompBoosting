@@ -56,7 +56,7 @@ tasks = list(bh.task, oz.task, kin8nm.task, wine.task, puma.task)
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = oz.task
+tsk = bh.task
 ctrl = makeTuneControlRandom(maxit = 100L)
 rdesc_tune = makeResampleDesc("CV", iters = 3L)
 
@@ -66,7 +66,7 @@ rdesc_tune = makeResampleDesc("CV", iters = 3L)
 num_ps = makeParamSet(
   makeNumericParam("nu", lower = 0.001, upper = 0.2),
   makeNumericParam("epsilon", lower = 0.00001, upper = 0.1),
-  makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("bbs","btree"), tunable = F),
+  makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("btree"), tunable = F),
   makeIntegerLearnerParam(id = "max_depth", default = 8L, lower = 3, upper = 30, tunable = F)
 )
 print(num_ps)
@@ -215,8 +215,9 @@ lrn.list = list(lrn.icb,
                regr.glmboost,
                regr.rpart,
                regr.svm,
-               regr.rf,
-               regr.xgboost)
+               regr.rf
+               #,regr.xgboost
+               )
 
 
 
