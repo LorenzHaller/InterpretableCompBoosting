@@ -325,7 +325,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                    data = data, family = family, offset = mb_tree$fitted(),
                    control = boost_control(nu = nu, mstop = 1))
   
-  # Check if feature added is new
+  # Check if a feature added is new
   if(!mb_tree_max$xselect()[iteration-transition_trees_max] %in% feature_list){
     feature_list <- c(feature_list,as.character(mb_tree_max$xselect()[iteration-transition_trees_max]))
     feature_counter[iteration+1] <- feature_counter[iteration] + 1
