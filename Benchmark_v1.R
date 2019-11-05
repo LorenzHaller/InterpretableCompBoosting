@@ -5,6 +5,9 @@
 ##### PREPARATION ####################################################################
 
 setwd("C:/Users/halle/Downloads/Uni/Interpretable Machine Learning/InterpretableCompBoosting")
+# for cip pool
+#setwd("H:/Interpretable Comp Boost/InterpretableCompBoosting")
+
 
 # Load data for Airquality Example
 data("airquality")
