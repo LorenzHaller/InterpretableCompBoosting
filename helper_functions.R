@@ -156,3 +156,71 @@ plot.icb = function(micb_object = NULL, predict_object = NULL, fcount = FALSE,
   
 }
 
+
+
+data_risk_table <- function(icb_list, train = TRUE, data_names){
+  # icb_list: a list of trained icb objects (train = TRUE) or prediction objects (train = FALSE)
+  # for every data set in the list add a line in the table
+  
+  col_names <- c("%-Risk Explanation in stage 1 (Linear)","%-Risk Explanation in stage 2 (Non-linear)",
+                 "%-Risk Explanation in stage 3 (Trees of depth 2)","%-Risk Explanation in stage 4 (Deeper Trees)")
+  
+  table <- matrix("", nrow = length(icb_list), ncol = 4)
+  
+  row_names <- 1:length(icb_list)
+  
+  
+  if(isTRUE(train)){
+    
+    for(i in 1:length(icb_list)){
+      
+      initial_risk <-round(icb_list[[i]]$Risk[1],digits=2)
+      risk_stage1 <- round(icb_list[[i]]$Risk[icb_list[[i]]$`Transition Iterations`[1]+1],digits=2)
+      risk_stage2 <- round(icb_list[[i]]$Risk[icb_list[[i]]$`Transition Iterations`[2]+1],digits=2)
+      risk_stage3 <- round(icb_list[[i]]$Risk[icb_list[[i]]$`Transition Iterations`[3]+1],digits=2)
+      risk_stage4 <- round(icb_list[[i]]$Risk[length(icb_list[[i]]$Risk)],digits=2)
+      
+      perc_stage1 <- paste(round((1 - (risk_stage1/initial_risk)) * 100, digits=2),"%")
+      perc_stage2 <- paste(round(((risk_stage1-risk_stage2)/initial_risk) * 100,digits=2),"%")
+      perc_stage3 <- paste(round(((risk_stage2-risk_stage3)/initial_risk) * 100,digits=2),"%")
+      perc_stage4 <- paste(round(((risk_stage3-risk_stage4)/initial_risk) * 100,digits=2),"%")
+      
+      table[i,] <- c(perc_stage1,perc_stage2,perc_stage3,perc_stage4)
+      
+    }
+    
+    
+    df <- as.data.frame(table)
+    colnames(df) <- col_names
+    rownames(df) <- data_names
+    formattable(df)
+    
+  }
+  
+  else if(isFALSE(train)){
+    
+    for(i in 1:length(icb_list)){
+      
+      initial_risk <-round(icb_list[[i]]$TestRisk[1],digits=2)
+      risk_stage1 <- round(icb_list[[i]]$TestRisk[icb_list[[i]]$`Transition Iterations`[1]+1],digits=2)
+      risk_stage2 <- round(icb_list[[i]]$TestRisk[icb_list[[i]]$`Transition Iterations`[2]+1],digits=2)
+      risk_stage3 <- round(icb_list[[i]]$TestRisk[icb_list[[i]]$`Transition Iterations`[3]+1],digits=2)
+      risk_stage4 <- round(icb_list[[i]]$TestRisk[length(icb_list[[i]]$TestRisk)],digits=2)
+      
+      perc_stage1 <- paste(round((1 - (risk_stage1/initial_risk)) * 100, digits=2),"%")
+      perc_stage2 <- paste(round(((risk_stage1-risk_stage2)/initial_risk) * 100,digits=2),"%")
+      perc_stage3 <- paste(round(((risk_stage2-risk_stage3)/initial_risk) * 100,digits=2),"%")
+      perc_stage4 <- paste(round(((risk_stage3-risk_stage4)/initial_risk) * 100,digits=2),"%")
+      
+      table[i,] <- c(perc_stage1,perc_stage2,perc_stage3,perc_stage4)
+      
+    }
+  
+    df <- as.data.frame(table)
+    colnames(df) <- col_names
+    rownames(df) <- data_names
+    formattable(df)
+  
+  }
+  
+}
