@@ -60,9 +60,9 @@ stage_risk(pred_object = pred)
 # Show results for multiple data sets
 source("helper_functions.R")
 train_list = list()
-train_list[[1]] = train_bh
-train_list[[2]] = train_Air
-data_risk_table(icb_list = train_list, train = T, 
+train_list[[1]] = test_bh
+train_list[[2]] = test_Air
+data_risk_table(icb_list = train_list, train = F, 
                 data_names = c("Boston Housing", "Airquality"))
 
 # Visualize feature effects
