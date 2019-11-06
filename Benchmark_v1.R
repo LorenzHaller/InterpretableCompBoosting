@@ -65,6 +65,10 @@ train_list[[2]] = test_Air
 data_risk_table(icb_list = train_list, train = F, 
                 data_names = c("Boston Housing", "Airquality"))
 
+# Show individual results for all observations in predict data
+source("helper_functions.R")
+individual_stage_risk(pred, subset = c(1,2,34))
+
 # Visualize feature effects
 source("pdp_function.R")
 pdp_function(icb_object = micb_wrapper)

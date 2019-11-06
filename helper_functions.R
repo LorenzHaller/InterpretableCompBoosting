@@ -158,7 +158,7 @@ plot.icb = function(micb_object = NULL, predict_object = NULL, fcount = FALSE,
 
 
 
-data_risk_table <- function(icb_list, train = TRUE, data_names){
+data_risk_table <- function(icb_list, train = TRUE, data_names = NULL){
   # icb_list: a list of trained icb objects (train = TRUE) or prediction objects (train = FALSE)
   # for every data set in the list add a line in the table
   
@@ -167,7 +167,10 @@ data_risk_table <- function(icb_list, train = TRUE, data_names){
   
   table <- matrix("", nrow = length(icb_list), ncol = 4)
   
-  row_names <- 1:length(icb_list)
+  if(is.null(data_names)){
+    data_names <- as.character(1:length(icb_list))
+  }
+  
   
   
   if(isTRUE(train)){
@@ -227,9 +230,26 @@ data_risk_table <- function(icb_list, train = TRUE, data_names){
 
 
 
-individual_stage_risk <- function(pred_object){
+individual_stage_risk <- function(pred_object, subset = NULL){
   
+  if(is.null(subset)){
+    ind_matrix <- pred_object$IndividualRisk
+    ind_table <- ind_matrix[,2:5]
+    row_names <- paste("Obs.", as.character(1:dim(ind_table)[1]))
+  } else{
+    subset <- sort(subset)
+    ind_matrix <- pred_object$IndividualRisk[subset,]
+    ind_table <- ind_matrix[,2:5]
+    row_names <- paste("Obs.", subset)
+  }
   
+  ind_table[,1] <- paste(round((1 - (ind_matrix[,2] / ind_matrix[,1])) * 100, digits=2),"%")
+  ind_table[,2] <- paste(round(((ind_matrix[,2]-ind_matrix[,3]) / ind_matrix[,1]) * 100, digits=2),"%")
+  ind_table[,3] <- paste(round(((ind_matrix[,3]-ind_matrix[,4]) / ind_matrix[,1]) * 100, digits=2),"%")
+  ind_table[,4] <- paste(round(((ind_matrix[,4]-ind_matrix[,5]) / ind_matrix[,1]) * 100, digits=2),"%")
   
+  ind_df <- as.data.frame(ind_table)
+  rownames(ind_df) <- row_names
+  formattable(ind_df)
   
 }
