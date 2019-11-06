@@ -224,3 +224,12 @@ data_risk_table <- function(icb_list, train = TRUE, data_names){
   }
   
 }
+
+
+
+individual_stage_risk <- function(pred_object){
+  
+  
+  
+  
+}

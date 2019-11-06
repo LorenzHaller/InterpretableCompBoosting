@@ -48,6 +48,9 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   # Create an empty numeric vector for saving the test risk results
   test_risk <- numeric(length(icb_object$Risk))
   test_risk_label <- numeric(length(icb_object$Risk))
+  individual_risk <- matrix(0, ncol = 5, nrow = dim(X_new)[1])
+  colnames(individual_risk) <- c("Intercept","Linear","Non-linear",
+                                 "Trees of depth 2", "Deeper Trees")
   
   # Create an empty vector with the length of newdata
   prediction <- vector(mode = "numeric", length = dim(X_new)[1])
@@ -65,6 +68,9 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     test_risk[1] <- icb_object$Riskfunction(y = y_int, f = prediction) / dim(X_new)[1]
     if(target_class=="Binomial"){
       test_risk_label[1] <- icb_object$Riskfunction(y = y_int, f=pred_label_risk(prediction)) / dim(X_new)[1]
+    }
+    for (j in 1:dim(X_new)[1]){
+      individual_risk[j,1] = round(icb_object$Riskfunction(y = y_int[j], f = prediction[j]), digits = 2)
     }
   }
   
@@ -96,6 +102,13 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   # Save the predictions after the linear part
   prediction_linear <- prediction_offset + pred_iteration
   
+  # Save the individual risk after stage 1
+  if(!is.null(target)){
+    for (j in 1:dim(X_new)[1]){
+      individual_risk[j,2] = round(icb_object$Riskfunction(y = y_int[j], f = prediction_linear[j]), digits = 2)
+    }
+  }
+  
   ## Version 2: use result of linear coefficients (uses one specific nu)
   #prediction <- as.matrix(cbind(1, X_new[,-1])) %*% icb_object$Coefficients$Linear_coefficients 
   
@@ -121,6 +134,12 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   
   prediction_spline <- prediction_linear + pred_iteration
   
+  # Save the individual risk after stage 2
+  if(!is.null(target)){
+    for (j in 1:dim(X_new)[1]){
+      individual_risk[j,3] = round(icb_object$Riskfunction(y = y_int[j], f = prediction_spline[j]), digits = 2)
+    }
+  }
   
   
   # For the tree (depth=2) part:
@@ -143,6 +162,12 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   
   prediction_tree <- prediction_spline + pred_iteration
   
+  # Save the individual risk after stage 3
+  if(!is.null(target)){
+    for (j in 1:dim(X_new)[1]){
+      individual_risk[j,4] = round(icb_object$Riskfunction(y = y_int[j], f = prediction_tree[j]), digits = 2)
+    }
+  }
   
   # For the tree (depth via user input) part:
   while(iteration < length(icb_object$Risk)){
@@ -165,6 +190,12 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   
   prediction_tree_max <- prediction_tree + pred_iteration
   
+  # Save the individual risk after the last stage
+  if(!is.null(target)){
+    for (j in 1:dim(X_new)[1]){
+      individual_risk[j,5] = round(icb_object$Riskfunction(y = y_int[j], f = prediction_tree_max[j]), digits = 2)
+    }
+  }
   
   
   
@@ -195,6 +226,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   }
   return_list[["TestRisk"]] <- test_risk
   return_list[["Transition Iterations"]] <- c(icb_object$`Transition Iterations`,length(icb_object$Risk))
+  return_list[["IndividualRisk"]] <- individual_risk
   
   options(warn = oldw)
   
