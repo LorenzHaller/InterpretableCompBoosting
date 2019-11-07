@@ -10,7 +10,9 @@ makeRLearner.regr.icb = function() {
       makeNumericLearnerParam(id = "nu", lower = 0, upper = 1, default = 0.1),
       makeNumericLearnerParam(id = "epsilon", lower = 0, upper = 1, default = 0.005),
       makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("bbs","btree")),
-      makeIntegerLearnerParam(id = "max_depth", default = 8L)
+      makeIntegerLearnerParam(id = "max_depth", default = 8L),
+      makeIntegerLearnerParam(id = "min_split", default = 20L),
+      makeIntegerLearnerParam(id = "min_bucket", default = 7L)
     ),
     properties = c("numerics", "factors"),
     name = "Gradually interpretable component-wise boosting",
@@ -29,6 +31,8 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   epsilon <- .learner$par.vals$epsilon
   bl2 <- .learner$par.vals$bl2
   max_depth <- .learner$par.vals$max_depth
+  min_split <- .learner$par.vals$min_split
+  min_bucket <- .learner$par.vals$min_bucket
   
   # Preparing the formula and data by seperating the target(y) and the features(X)
   data <- na.omit(data)
@@ -161,19 +165,16 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   
   iteration <- iteration + 1 
   
-  ctrl = partykit::ctree_control(maxdepth = 2L)
-  
-  
-  # Extract feature name
-  feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
-  
-  # Create formula for applying btree
-  tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
-  tree_formula <- as.formula(tree_formula)
-  
-  mb_tree = mboost(formula = tree_formula, 
-                   data = data, family = family, offset = fitted_values,
-                   control = boost_control(nu = nu, mstop = 1))
+  mb_tree = blackboost(formula = formula, data = data, offset = fitted_values,
+                       control = boost_control(nu = nu, mstop = 1),
+                       tree_controls = partykit::ctree_control(
+                         teststat = "quad",
+                         testtype = "Teststatistic",
+                         mincriterion = 0,
+                         minsplit = min_split, 
+                         minbucket = min_bucket,
+                         maxdepth = 2, 
+                         saveinfo = FALSE))
   
   # Check if feature added is new
   if(!mb_tree$xselect()[iteration-transition_trees] %in% feature_list){
@@ -210,19 +211,16 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   
   iteration <- iteration + 1 
   
-  ctrl_max = partykit::ctree_control(maxdepth = max_depth)
-  
-  
-  # Extract feature name
-  feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
-  
-  # Create formula for applying btree
-  tree_formula_max <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl_max)")
-  tree_formula_max <- as.formula(tree_formula_max)
-  
-  mb_tree_max = mboost(formula = tree_formula_max, 
-                       data = data, family = family, offset = mb_tree$fitted(),
-                       control = boost_control(nu = nu, mstop = 1))
+  mb_tree_max = blackboost(formula = formula, data = data, offset = fitted_values,
+                           control = boost_control(nu = nu, mstop = 1),
+                           tree_controls = partykit::ctree_control(
+                             teststat = "quad",
+                             testtype = "Teststatistic",
+                             mincriterion = 0,
+                             minsplit = min_split, 
+                             minbucket = min_bucket,
+                             maxdepth = max_depth, 
+                             saveinfo = FALSE))
   
   # Check if feature added is new
   if(!mb_tree_max$xselect()[iteration-transition_trees_max] %in% feature_list){
@@ -380,7 +378,9 @@ makeRLearner.classif.icb = function() {
       makeNumericLearnerParam(id = "nu", lower = 0, upper = 1, default = 0.1),
       makeNumericLearnerParam(id = "epsilon", lower = 0, upper = 1, default = 0.005),
       makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("bbs","btree")),
-      makeIntegerLearnerParam(id = "max_depth", default = 8L)
+      makeIntegerLearnerParam(id = "max_depth", default = 8L),
+      makeIntegerLearnerParam(id = "min_split", default = 20L),
+      makeIntegerLearnerParam(id = "min_bucket", default = 7L)
     ),
     properties = c("twoclass","numerics", "factors","prob","ordered"),
     name = "Gradually interpretable component-wise boosting",
@@ -399,6 +399,8 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   epsilon <- .learner$par.vals$epsilon
   bl2 <- .learner$par.vals$bl2
   max_depth <- .learner$par.vals$max_depth
+  min_split <- .learner$par.vals$min_split
+  min_bucket <- .learner$par.vals$min_bucket
   
   # Preparing the formula and data by seperating the target(y) and the features(X)
   data <- na.omit(data)
@@ -561,19 +563,16 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   
   iteration <- iteration + 1 
   
-  ctrl = partykit::ctree_control(maxdepth = 2L)
-  
-  
-  # Extract feature name
-  feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
-  
-  # Create formula for applying btree
-  tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
-  tree_formula <- as.formula(tree_formula)
-  
-  mb_tree = mboost(formula = tree_formula, 
-                   data = data, family = family, offset = fitted_values,
-                   control = boost_control(nu = nu, mstop = 1))
+  mb_tree = blackboost(formula = formula, data = data, offset = fitted_values,
+                       control = boost_control(nu = nu, mstop = 1),
+                       tree_controls = partykit::ctree_control(
+                         teststat = "quad",
+                         testtype = "Teststatistic",
+                         mincriterion = 0,
+                         minsplit = min_split, 
+                         minbucket = min_bucket,
+                         maxdepth = 2, 
+                         saveinfo = FALSE))
   
   # Check if feature added is new
   if(!mb_tree$xselect()[iteration-transition_trees] %in% feature_list){
@@ -613,19 +612,16 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   
   iteration <- iteration + 1 
   
-  ctrl_max = partykit::ctree_control(maxdepth = max_depth)
-  
-  
-  # Extract feature name
-  feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
-  
-  # Create formula for applying btree
-  tree_formula_max <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl_max)")
-  tree_formula_max <- as.formula(tree_formula_max)
-  
-  mb_tree_max = mboost(formula = tree_formula_max, 
-                       data = data, family = family, offset = mb_tree$fitted(),
-                       control = boost_control(nu = nu, mstop = 1))
+  mb_tree_max = blackboost(formula = formula, data = data, offset = fitted_values,
+                           control = boost_control(nu = nu, mstop = 1),
+                           tree_controls = partykit::ctree_control(
+                             teststat = "quad",
+                             testtype = "Teststatistic",
+                             mincriterion = 0,
+                             minsplit = min_split, 
+                             minbucket = min_bucket,
+                             maxdepth = max_depth, 
+                             saveinfo = FALSE))
   
   # Check if feature added is new
   if(!mb_tree_max$xselect()[iteration-transition_trees_max] %in% feature_list){

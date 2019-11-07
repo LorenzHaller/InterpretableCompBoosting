@@ -33,6 +33,8 @@ colnames(data) <- c("Population","Income","Illiteracy","LifeExp",
 formula <- Income ~ Population + Illiteracy + LifeExp + Murder + HSGrad + Frost + Area
 formula <- terms.formula(formula)
 
+
+
 # Split the data in training and test data (75/25 split)
 set.seed(2807)
 sample <- sample.int(n = nrow(data), size = floor(.66*nrow(data)), replace = F)
@@ -55,11 +57,11 @@ source("family.R")
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
                                             target_class = "Gaussian", bl2 = "btree",
-                                            epsilon = 0.005)
+                                            epsilon = 0.005, max_depth = 4)
 
 # Make predictions
 source("icb_predict_wrapper_offset.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="medv")
 
 # Show results in table
 source("helper_functions.R")

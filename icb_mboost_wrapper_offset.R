@@ -1,5 +1,6 @@
 interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class="Gaussian",
-                                     epsilon = 0.005, bl2=c("bbs","btree"), max_depth = 8){
+                                     epsilon = 0.005, bl2=c("bbs","btree"), max_depth = 8,
+                                     min_split = 20, min_bucket = round(min_split/3)){
   # data:     a data frame containing target and features
   # formula:  a formula specifying the model
   ## y:       the target variable
@@ -272,8 +273,8 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                              teststat = "quad",
                              testtype = "Teststatistic",
                              mincriterion = 0,
-                             minsplit = 10, 
-                             minbucket = 4,
+                             minsplit = min_split, 
+                             minbucket = min_bucket,
                              maxdepth = 2, 
                              saveinfo = FALSE))
   
@@ -342,8 +343,8 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                          teststat = "quad",
                          testtype = "Teststatistic",
                          mincriterion = 0,
-                         minsplit = 10, 
-                         minbucket = 4,
+                         minsplit = min_split, 
+                         minbucket = min_bucket,
                          maxdepth = max_depth, 
                          saveinfo = FALSE))
   
