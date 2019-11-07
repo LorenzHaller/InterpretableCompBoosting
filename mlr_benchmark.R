@@ -57,7 +57,7 @@ tasks = list(bh.task, oz.task, kin8nm.task, wine.task, puma.task)
 ####### Hyperparametertuning Part ##################################################
 
 tsk = bh.task
-ctrl = makeTuneControlRandom(maxit = 100L)
+ctrl = makeTuneControlRandom(maxit = 30L)
 rdesc_tune = makeResampleDesc("CV", iters = 3L)
 
 
@@ -65,18 +65,24 @@ rdesc_tune = makeResampleDesc("CV", iters = 3L)
 
 num_ps = makeParamSet(
   makeNumericParam("nu", lower = 0.001, upper = 0.2),
-  makeNumericParam("epsilon", lower = 0.00001, upper = 0.1),
+  makeNumericParam("epsilon", lower = 0.0005, upper = 0.1),
   makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("btree"), tunable = F),
-  makeIntegerLearnerParam(id = "max_depth", default = 8L, lower = 3, upper = 30, tunable = F)
+  makeIntegerLearnerParam(id = "max_depth", lower = 3, upper = 8, tunable = F),
+  makeIntegerLearnerParam(id = "min_split",  lower = 5L, upper = 30L, tunable = F),
+  makeIntegerLearnerParam(id = "min_bucket", lower = 2L, upper = 15L, tunable = F)
 )
 print(num_ps)
 res = tuneParams("regr.icb", task = tsk, resampling = rdesc_tune,
                  par.set = num_ps, control = ctrl)
 res
-# Op. pars: nu=0.169; epsilon=0.00172; bl2=btree; max_depth=24
+### Op. pars: nu=0.169; epsilon=0.00172; bl2=btree; max_depth=24
+# Tune result for bh.task with 30 runs:
+#   Op. pars: nu=0.199; epsilon=0.0459; bl2=btree; max_depth=6; min_split=8; min_bucket=8
+# mse.test.mean=12.6906784
 
 lrn.icb = setHyperPars(makeLearner("regr.icb"), nu = res$x$nu, epsilon = res$x$epsilon,
-                       bl2 = "btree", max_depth = 4L)
+                       bl2 = "btree", max_depth = res$x$max_depth, 
+                       min_split = res$x$min_split, min_bucket = res$x$min_bucket )
 lrn.icb
 
 

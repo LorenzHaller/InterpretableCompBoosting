@@ -12,7 +12,8 @@ makeRLearner.regr.icb = function() {
       makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("bbs","btree")),
       makeIntegerLearnerParam(id = "max_depth", default = 8L),
       makeIntegerLearnerParam(id = "min_split", default = 20L),
-      makeIntegerLearnerParam(id = "min_bucket", default = 7L)
+      makeIntegerLearnerParam(id = "min_bucket", default = 7L),
+      makeIntegerLearnerParam(id = "df_spline", default = 2L)
     ),
     properties = c("numerics", "factors"),
     name = "Gradually interpretable component-wise boosting",
@@ -33,6 +34,7 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   max_depth <- .learner$par.vals$max_depth
   min_split <- .learner$par.vals$min_split
   min_bucket <- .learner$par.vals$min_bucket
+  df_spline <- .learner$par.vals$df_spline
   
   # Preparing the formula and data by seperating the target(y) and the features(X)
   data <- na.omit(data)
@@ -126,9 +128,17 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   
   iteration <- iteration + 1 
     
-  mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
-                                 baselearner = bl2, offset = mb_linear$fitted(),
+  if(bl2 == "bbs"){
+    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+                                 baselearner = bl2, dfbase = df_spline,
+                                 offset = mb_linear$fitted(),
                                  control = boost_control(nu = nu, mstop = 1))
+  } else{
+    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+                                 baselearner = bl2,
+                                 offset = mb_linear$fitted(),
+                                 control = boost_control(nu = nu, mstop = 1))
+  }
     
   # Check if feature added is new
   if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){

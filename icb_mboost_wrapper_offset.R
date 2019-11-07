@@ -1,5 +1,6 @@
 interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class="Gaussian",
-                                     epsilon = 0.005, bl2=c("bbs","btree"), max_depth = 8,
+                                     epsilon = 0.005, bl2=c("bbs","btree"), df_spline = 4,
+                                     max_depth = 8,
                                      min_split = 20, min_bucket = round(min_split/3)){
   # data:     a data frame containing target and features
   # formula:  a formula specifying the model
@@ -211,9 +212,17 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     
     iteration <- iteration + 1 
     
-    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
-                                 baselearner = bl2, offset = mb_linear$fitted(),
+    if(bl2 == "bbs"){
+      mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+                                 baselearner = bl2, dfbase = df_spline,
+                                 offset = mb_linear$fitted(),
                                  control = boost_control(nu = nu, mstop = 1))
+    } else{
+      mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+                                   baselearner = bl2,
+                                   offset = mb_linear$fitted(),
+                                   control = boost_control(nu = nu, mstop = 1))
+    }
     
     # Check if feature added is new
     if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
