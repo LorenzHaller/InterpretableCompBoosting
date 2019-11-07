@@ -252,19 +252,30 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
   iteration <- iteration + 1 
   
-  ctrl = partykit::ctree_control(maxdepth = 2L)
+  #ctrl = partykit::ctree_control(maxdepth = 2L)
   
   
-  # Extract feature name
-  feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
+  # # Extract feature name
+  # feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
+  # 
+  # # Create formula for applying btree
+  # tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
+  # tree_formula <- as.formula(tree_formula)
+  # 
+  # mb_tree = mboost(formula = tree_formula, 
+  #                    data = data, family = family, offset = fitted_values,
+  #                    control = boost_control(nu = nu, mstop = 1))
   
-  # Create formula for applying btree
-  tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
-  tree_formula <- as.formula(tree_formula)
-  
-  mb_tree = mboost(formula = tree_formula, 
-                     data = data, family = family, offset = fitted_values,
-                     control = boost_control(nu = nu, mstop = 1))
+  mb_tree = blackboost(formula = formula, data = data, offset = fitted_values,
+                          control = boost_control(nu = nu, mstop = 1),
+                           tree_controls = partykit::ctree_control(
+                             teststat = "quad",
+                             testtype = "Teststatistic",
+                             mincriterion = 0,
+                             minsplit = 10, 
+                             minbucket = 4,
+                             maxdepth = 2, 
+                             saveinfo = FALSE))
   
   # Check if feature added is new
   if(!mb_tree$xselect()[iteration-transition_trees] %in% feature_list){
@@ -311,19 +322,30 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
   iteration <- iteration + 1 
   
-  ctrl_max = partykit::ctree_control(maxdepth = max_depth)
+  # ctrl_max = partykit::ctree_control(maxdepth = max_depth)
+  # 
+  # 
+  # # Extract feature name
+  # feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
+  # 
+  # # Create formula for applying btree
+  # tree_formula_max <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl_max)")
+  # tree_formula_max <- as.formula(tree_formula_max)
+  # 
+  # mb_tree_max = mboost(formula = tree_formula_max, 
+  #                  data = data, family = family, offset = mb_tree$fitted(),
+  #                  control = boost_control(nu = nu, mstop = 1))
   
-  
-  # Extract feature name
-  feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
-  
-  # Create formula for applying btree
-  tree_formula_max <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl_max)")
-  tree_formula_max <- as.formula(tree_formula_max)
-  
-  mb_tree_max = mboost(formula = tree_formula_max, 
-                   data = data, family = family, offset = mb_tree$fitted(),
-                   control = boost_control(nu = nu, mstop = 1))
+  mb_tree_max = blackboost(formula = formula, data = data, offset = fitted_values,
+                       control = boost_control(nu = nu, mstop = 1),
+                       tree_controls = partykit::ctree_control(
+                         teststat = "quad",
+                         testtype = "Teststatistic",
+                         mincriterion = 0,
+                         minsplit = 10, 
+                         minbucket = 4,
+                         maxdepth = max_depth, 
+                         saveinfo = FALSE))
   
   # Check if a feature added is new
   if(!mb_tree_max$xselect()[iteration-transition_trees_max] %in% feature_list){

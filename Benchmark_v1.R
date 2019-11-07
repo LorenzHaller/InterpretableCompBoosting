@@ -23,6 +23,15 @@ data <- BostonHousing
 formula <- medv ~ crim + zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + b + lstat
 formula <- terms.formula(formula)
 
+# Add another data set to explore interactions
+library(jtools)
+states <- as.data.frame(state.x77)
+data <- states
+colnames(data) <- c("Population","Income","Illiteracy","LifeExp",
+                    "Murder","HSGrad","Frost","Area")
+
+formula <- Income ~ Population + Illiteracy + LifeExp + Murder + HSGrad + Frost + Area
+formula <- terms.formula(formula)
 
 # Split the data in training and test data (75/25 split)
 set.seed(2807)
