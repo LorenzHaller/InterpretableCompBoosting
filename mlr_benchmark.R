@@ -7,7 +7,9 @@ source("mlr_wrapper.R")
 set.seed(177)
 #devtools::install_github("jakob-r/mlrHyperopt", dependencies = TRUE)
 library(mlrHyperopt)
-
+library(caret)
+library(mboost)
+library(partykit)
 
 
 
