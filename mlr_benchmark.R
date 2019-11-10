@@ -14,10 +14,15 @@ library(mlrHyperopt)
 ###### Find a list of tasks for the benchmark #############################
 
 
-taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = 10,
-                            number.of.instances = c(1000,10000),
+taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = NULL,
+                            number.of.instances = c(1000,100000),
                             number.of.features = c(5,150))
 
+taskinfo_all_v3 = taskinfo_all[taskinfo_all$number.of.symbolic.features > 0,]
+
+# Task IDs for benchmark:
+## mv 4774
+## visualizing_soil 4999
 
 ## Task 1: Boston Housing
 data(BostonHousing, package = "mlbench")
@@ -44,6 +49,12 @@ puma.OML.task = getOMLTask(2313)
 puma8NH = puma.OML.task$input$data.set$data
 puma.task = makeRegrTask(data = puma8NH, target = "thetadd3")
 
+## TAsk 6: mv
+mv.OML.task = getOMLTask(4774)
+mv = mv.OML.task$input$data.set$data
+mv.task = makeRegrTask(data = mv, target = "y")
+
+
 # Create list of all tasks
 tasks = list(bh.task, oz.task, kin8nm.task, wine.task, puma.task)
 
@@ -56,7 +67,7 @@ tasks = list(bh.task, oz.task, kin8nm.task, wine.task, puma.task)
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = bh.task
+tsk = mv.task
 ctrl = makeTuneControlRandom(maxit = 30L)
 rdesc_tune = makeResampleDesc("CV", iters = 3L)
 
