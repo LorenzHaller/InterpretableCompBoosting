@@ -83,6 +83,7 @@ num_ps = makeParamSet(
   makeIntegerLearnerParam(id = "max_depth", lower = 3, upper = 8, tunable = F),
   makeIntegerLearnerParam(id = "min_split",  lower = 5L, upper = 30L, tunable = F),
   makeIntegerLearnerParam(id = "min_bucket", lower = 2L, upper = 15L, tunable = F)
+  # only for splines: makeIntegerLearnerParam(id = "df_spline", lower = 2L, upper = 5L, tunable = T)
 )
 print(num_ps)
 res = tuneParams("regr.icb", task = tsk, resampling = rdesc_tune,
