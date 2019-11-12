@@ -17,10 +17,10 @@ library(partykit)
 
 
 taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = NULL,
-                            number.of.instances = c(1000,100000),
-                            number.of.features = c(5,150))
+                            #number.of.instances = c(1000,100000),
+                            number.of.features = c(5,100))
 
-taskinfo_all_v3 = taskinfo_all[taskinfo_all$number.of.symbolic.features > 0,]
+taskinfo_all_v4 = taskinfo_all[taskinfo_all$number.of.symbolic.features > 0,]
 
 # Task IDs for benchmark:
 ## mv 4774
@@ -56,6 +56,19 @@ mv.OML.task = getOMLTask(4774)
 mv = mv.OML.task$input$data.set$data
 mv.task = makeRegrTask(data = mv, target = "y")
 
+## TAsk 7: credit-g
+creditg.OML.task = getOMLTask(146813)
+creditg = creditg.OML.task$input$data.set$data
+creditg.task = makeRegrTask(data = creditg, target = "credit_amount")
+
+## Task 8: bike sharing demand challenge
+bike.OML.task = getOMLTask(7393)
+bike = bike.OML.task$input$data.set$data
+exclude_cols = c("datetime")
+bike = droplevels(bike[,!colnames(bike) %in% exclude_cols])
+bike.task = makeRegrTask(data = bike, target = "count")
+
+
 
 # Create list of all tasks
 tasks = list(bh.task, oz.task, kin8nm.task, wine.task, puma.task)
@@ -69,7 +82,7 @@ tasks = list(bh.task, oz.task, kin8nm.task, wine.task, puma.task)
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = mv.task
+tsk = bike.task
 ctrl = makeTuneControlRandom(maxit = 30L)
 rdesc_tune = makeResampleDesc("CV", iters = 3L)
 
@@ -83,7 +96,7 @@ num_ps = makeParamSet(
   makeIntegerLearnerParam(id = "max_depth", lower = 3, upper = 8, tunable = F),
   makeIntegerLearnerParam(id = "min_split",  lower = 5L, upper = 30L, tunable = F),
   makeIntegerLearnerParam(id = "min_bucket", lower = 2L, upper = 15L, tunable = F)
-  # only for splines: makeIntegerLearnerParam(id = "df_spline", lower = 2L, upper = 5L, tunable = T)
+  # only for splines: ,makeIntegerLearnerParam(id = "df_spline", lower = 2L, upper = 5L, tunable = T)
 )
 print(num_ps)
 res = tuneParams("regr.icb", task = tsk, resampling = rdesc_tune,
@@ -93,6 +106,10 @@ res
 # Tune result for bh.task with 30 runs:
 #   Op. pars: nu=0.199; epsilon=0.0459; bl2=btree; max_depth=6; min_split=8; min_bucket=8
 # mse.test.mean=12.6906784
+#Op. pars for mv: nu=0.103; epsilon=0.0171; bl2=btree; max_depth=8; min_split=23; min_bucket=3
+#mse.test.mean=0.0058880
+# credit-g Op. pars: nu=0.125; epsilon=0.00271; bl2=btree; max_depth=8; min_split=16; min_bucket=15
+#mse.test.mean=3511052.5243952
 
 lrn.icb = setHyperPars(makeLearner("regr.icb"), nu = res$x$nu, epsilon = res$x$epsilon,
                        bl2 = "btree", max_depth = res$x$max_depth, 
@@ -113,36 +130,47 @@ lrn.icb
 
 # Tuning for gamboost
 params_gamboost <- makeParamSet(makeIntegerParam("mstop", lower = 50, upper = 1000),
-                                makeNumericParam("nu", lower = 0.01, upper = 0.2))
+                                makeNumericParam("nu", lower = 0.01, upper = 0.2),
+                                makeDiscreteParam("baselearner", default = "btree", values = c("btree")))
+getParamSet(makeLearner("regr.gamboost"))
 
 res_gamb = tuneParams("regr.gamboost", task = tsk, resampling = rdesc_tune,
                     par.set = params_gamboost, control = ctrl)
 
 regr.gamboost = setHyperPars(makeLearner("regr.gamboost"), mstop = res_gamb$x$mstop, 
-                             nu = res_gamb$x$nu)
+                             nu = res_gamb$x$nu, baselearner = "btree")
 #Op. pars: mstop=61; nu=0.164  
-
+# opt par for mv mstop=468; nu=0.182
+# creditg Op. pars: mstop=471; nu=0.084; baselearner=btree
 
 # Tuning for glmboost
 res_glmb = hyperopt(tsk, learner = "regr.glmboost")
 regr.glmboost = setHyperPars(makeLearner("regr.glmboost"), mstop = res_glmb$x$mstop,
                              nu = res_glmb$x$nu) 
+# Op. pars for mv : mstop=65; nu=0.595
+# creditg Op. pars: mstop=54; nu=0.493
 
 # Tuning for an rpart tree
 res_rpart = hyperopt(tsk, learner = "regr.rpart")
 regr.rpart = setHyperPars(makeLearner("regr.rpart"), cp = res_rpart$x$cp,
                           maxdepth = res_rpart$x$maxdepth, minbucket = res_rpart$x$minbucket,
                           minsplit = res_rpart$x$minsplit)
+# opt pars for mv: Op. pars: cp=0.000977; maxdepth=13; minbucket=12; minsplit=41
+# credit g Op. pars: cp=0.00397; maxdepth=23; minbucket=5; minsplit=43
 
 # Tuning for SVM
+parallelStartLocal()
 res_svm = hyperopt(tsk, learner = "regr.svm")
 regr.svm = setHyperPars(makeLearner("regr.svm"), cost = res_svm$x$cost,
-                        gamma = res_svm$x$gamma) 
+                        gamma = res_svm$x$gamma)
+parallelStop()
+# credit g Op. pars: cost=9.41e+03; gamma=0.119
 
 # Tuning for Random Forest
 res_rf = hyperopt(tsk, learner = "regr.randomForest")
 regr.rf = setHyperPars(makeLearner("regr.randomForest"), nodesize = res_rf$x$nodesize,
                        mtry = res_rf$x$mtry)
+# credit-g Op. pars: nodesize=9; mtry=14
 
 # Tuning for xgboost
 res_xgb = hyperopt(tsk, learner = "regr.xgboost")
@@ -243,16 +271,19 @@ lrn.list = list(lrn.icb,
 
 
 ################ Make benchmark #########################################################
+parallelStartLocal()
 bmr = benchmark(lrn.list, tsk, rdesc_v2)
-
+# keep fitted models using models=TRUE
+parallelStop()
 
 
 ## Visualize benchmark results ##################################
 
 getBMRAggrPerformances(bmr)
-plotBMRBoxplots(bmr,pretty.names = T)
+plotBMRBoxplots(bmr,pretty.names = T, style = "violin")
 getBMRPerformances(bmr, as.df = TRUE)
 
 
 plotBMRBoxplots(bmr, measure = mse, order.lrn = getBMRLearnerIds(bmr))
 #plotBMRSummary(bmr)
+bmr$learners$regr.icb$id

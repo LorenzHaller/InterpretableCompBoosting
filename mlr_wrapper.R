@@ -49,7 +49,7 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   }
   
   # Make one-hot encoding for factor variables
-  dummies <- dummyVars(" ~ .", data = data)
+  dummies <- dummyVars(" ~ .", data = data, fullRank = T)
   data <- data.frame(predict(dummies, newdata = data))
   
   # Create mlr task to get full formula
