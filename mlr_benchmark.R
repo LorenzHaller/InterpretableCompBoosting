@@ -17,14 +17,16 @@ library(partykit)
 
 
 taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = NULL,
-                            #number.of.instances = c(1000,100000),
+                            number.of.instances = c(1000,100000),
                             number.of.features = c(5,100))
 
-taskinfo_all_v4 = taskinfo_all[taskinfo_all$number.of.symbolic.features > 0,]
+##### Remove duplicates by name
+taskinfo_all = taskinfo_all[!duplicated(taskinfo_all$name),]
 
-# Task IDs for benchmark:
-## mv 4774
-## visualizing_soil 4999
+##### Filter for task with at least one categorical feature
+taskinfo_all_cat = taskinfo_all[taskinfo_all$number.of.symbolic.features > 0,]
+
+
 
 ## Task 1: Boston Housing
 data(BostonHousing, package = "mlbench")
@@ -65,7 +67,7 @@ creditg.task = makeRegrTask(data = creditg, target = "credit_amount")
 bike.OML.task = getOMLTask(7393)
 bike = bike.OML.task$input$data.set$data
 exclude_cols = c("datetime")
-bike = droplevels(bike[,!colnames(bike) %in% exclude_cols])
+bike = bike[,!colnames(bike) %in% exclude_cols]
 bike.task = makeRegrTask(data = bike, target = "count")
 
 
@@ -280,10 +282,10 @@ parallelStop()
 ## Visualize benchmark results ##################################
 
 getBMRAggrPerformances(bmr)
-plotBMRBoxplots(bmr,pretty.names = T, style = "violin")
+plotBMRBoxplots(bmr,pretty.names = T)
 getBMRPerformances(bmr, as.df = TRUE)
 
 
-plotBMRBoxplots(bmr, measure = mse, order.lrn = getBMRLearnerIds(bmr))
-#plotBMRSummary(bmr)
-bmr$learners$regr.icb$id
+# plotBMRBoxplots(bmr, measure = mse, order.lrn = getBMRLearnerIds(bmr))
+# #plotBMRSummary(bmr)
+# bmr$learners$regr.icb$id
