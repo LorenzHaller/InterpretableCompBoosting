@@ -17,11 +17,11 @@ library(partykit)
 
 
 taskinfo_all = listOMLTasks(task.type = "Supervised Regression", limit = NULL,
-                            number.of.instances = c(1000,100000),
-                            number.of.features = c(5,100))
+                            number.of.instances = c(500,10000),
+                            number.of.features = c(5,30))
 
 ##### Remove duplicates by name
-taskinfo_all = taskinfo_all[!duplicated(taskinfo_all$name),]
+taskinfo_all = taskinfo_all[!duplicated(taskinfo_all$name) & taskinfo_all$number.of.instances.with.missing.values == 0,]
 
 ##### Filter for task with at least one categorical feature
 taskinfo_all_cat = taskinfo_all[taskinfo_all$number.of.symbolic.features > 0,]
@@ -32,11 +32,11 @@ taskinfo_all_cat = taskinfo_all[taskinfo_all$number.of.symbolic.features > 0,]
 data(BostonHousing, package = "mlbench")
 bh.task = makeRegrTask(data = BostonHousing, target = "medv")
 
-## Task 2: Airquality
-data("airquality")
-attach(airquality)
-airquality <- na.omit(airquality)
-oz.task = makeRegrTask(data = airquality, target = "Ozone")
+# ## Task 2: Airquality
+# data("airquality")
+# attach(airquality)
+# airquality <- na.omit(airquality)
+# oz.task = makeRegrTask(data = airquality, target = "Ozone")
 
 ## Task 3: kin8nm from Open ML
 oml.task_2280 = getOMLTask(2280)
@@ -48,28 +48,37 @@ wine.OML.task = getOMLTask(4768)
 wine_data = wine.OML.task$input$data.set$data
 wine.task = makeRegrTask(data = wine_data, target = "quality")
 
-## Task 5: puma8NH
-puma.OML.task = getOMLTask(2313)
-puma8NH = puma.OML.task$input$data.set$data
-puma.task = makeRegrTask(data = puma8NH, target = "thetadd3")
+# ## Task 5: puma8NH
+# puma.OML.task = getOMLTask(2313)
+# puma8NH = puma.OML.task$input$data.set$data
+# puma.task = makeRegrTask(data = puma8NH, target = "thetadd3")
 
-## TAsk 6: mv
-mv.OML.task = getOMLTask(4774)
-mv = mv.OML.task$input$data.set$data
-mv.task = makeRegrTask(data = mv, target = "y")
+# ## TAsk 6: mv
+# mv.OML.task = getOMLTask(4774)
+# mv = mv.OML.task$input$data.set$data
+# mv.task = makeRegrTask(data = mv, target = "y")
 
 ## TAsk 7: credit-g
 creditg.OML.task = getOMLTask(146813)
 creditg = creditg.OML.task$input$data.set$data
 creditg.task = makeRegrTask(data = creditg, target = "credit_amount")
 
-## Task 8: bike sharing demand challenge
-bike.OML.task = getOMLTask(7393)
-bike = bike.OML.task$input$data.set$data
-exclude_cols = c("datetime")
-bike = bike[,!colnames(bike) %in% exclude_cols]
-bike.task = makeRegrTask(data = bike, target = "count")
+# ## Task 8: bike sharing demand challenge
+# bike.OML.task = getOMLTask(7393)
+# bike = bike.OML.task$input$data.set$data
+# exclude_cols = c("datetime")
+# bike = bike[,!colnames(bike) %in% exclude_cols]
+# bike.task = makeRegrTask(data = bike, target = "count")
 
+## Task 9: cps_85_wages
+wages.OML.task = getOMLTask(4859)
+wages = wages.OML.task$input$data.set$data
+wages.task = makeRegrTask(data = wages, target = "WAGE")
+
+## Task 10: CPMP-2015-regression
+cpmp.OML.task = getOMLTask(189931)
+cpmp = cpmp.OML.task$input$data.set$data
+cpmp.task = makeRegrTask(data = cpmp, target = "runtime")
 
 
 # Create list of all tasks

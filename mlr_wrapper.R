@@ -10,10 +10,10 @@ makeRLearner.regr.icb = function() {
       makeNumericLearnerParam(id = "nu", lower = 0, upper = 1, default = 0.1),
       makeNumericLearnerParam(id = "epsilon", lower = 0, upper = 1, default = 0.005),
       makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("bbs","btree")),
-      makeIntegerLearnerParam(id = "max_depth", default = 8L),
-      makeIntegerLearnerParam(id = "min_split", default = 20L),
-      makeIntegerLearnerParam(id = "min_bucket", default = 7L),
-      makeIntegerLearnerParam(id = "df_spline", default = 2L)
+      makeIntegerLearnerParam(id = "max_depth", default = 8),
+      makeIntegerLearnerParam(id = "min_split", default = 10),
+      makeIntegerLearnerParam(id = "min_bucket", default = 4),
+      makeIntegerLearnerParam(id = "df_spline", default = 2)
     ),
     properties = c("numerics", "factors"),
     name = "Gradually interpretable component-wise boosting",
@@ -181,8 +181,8 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
                          teststat = "quad",
                          testtype = "Teststatistic",
                          mincriterion = 0,
-                         minsplit = min_split, 
-                         minbucket = min_bucket,
+                         minsplit = 10, 
+                         minbucket = 4,
                          maxdepth = 2, 
                          saveinfo = FALSE))
   
@@ -227,9 +227,9 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
                              teststat = "quad",
                              testtype = "Teststatistic",
                              mincriterion = 0,
-                             minsplit = min_split, 
-                             minbucket = min_bucket,
-                             maxdepth = max_depth, 
+                             minsplit = 10, 
+                             minbucket = 4,
+                             maxdepth = 2, 
                              saveinfo = FALSE))
   
   # Check if feature added is new
