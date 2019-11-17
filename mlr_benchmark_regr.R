@@ -36,6 +36,7 @@ bh.task = makeRegrTask(data = bh, target = "MEDV")
 ## Task 2: CPMP-2015-regression
 cpmp.OML.task = getOMLTask(189931)
 cpmp = cpmp.OML.task$input$data.set$data
+cpmp = cpmp[,!colnames(cpmp) %in% c("instance_id")]
 cpmp.task = makeRegrTask(data = cpmp, target = "runtime")
 
 ## Task 3: cps_85_wages
@@ -52,6 +53,11 @@ creditg.task = makeRegrTask(data = creditg, target = "credit_amount")
 oml.task_2280 = getOMLTask(2280)
 kin8nm = oml.task_2280$input$data.set$data
 kin8nm.task = makeRegrTask(data = kin8nm, target = "y")
+
+## Task : puma8NH
+puma.OML.task = getOMLTask(2313)
+puma8NH = puma.OML.task$input$data.set$data
+puma.task = makeRegrTask(data = puma8NH, target = "thetadd3")
 
 ## Task 6: Wine quality 
 wine.OML.task = getOMLTask(4768)
@@ -83,7 +89,7 @@ base.learners.regr = list(
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = bh.task
+tsk = puma.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
@@ -93,7 +99,7 @@ outer = makeResampleDesc("CV", iters = 5L)
 ####### Hypertuning for icb method 
 
 # icb using tree stumps
-
+set.seed(177)
 num_ps_tree = makeParamSet(
   makeNumericParam("nu", lower = 0.001, upper = 0.2),
   makeNumericParam("epsilon", lower = 0.0005, upper = 0.1),
@@ -123,7 +129,7 @@ r.icb.spline = resample(icb.spline, tsk, resampling = outer, extract = getTuneRe
 
 
 # ksvm
-
+set.seed(177)
 ps_ksvm = makeParamSet(
   makeNumericParam("C", lower = -15, upper = 15, trafo = function(x) 2^x),
   makeNumericParam("sigma", lower = -15, upper = 15, trafo = function(x) 2^x)
