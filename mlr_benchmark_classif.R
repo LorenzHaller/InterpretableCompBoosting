@@ -69,7 +69,7 @@ pollen.task = makeClassifTask(data = pollen, target = "binaryClass")
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = churn.task
+tsk = bank.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
@@ -93,16 +93,15 @@ icb.tree = makeTuneWrapper("classif.icb", resampling = inner, par.set = num_ps_t
 r = resample(icb.tree, tsk, resampling = outer, extract = getTuneResult)
 
 # icb using splines
-
+set.seed(177)
 num_ps_spline = makeParamSet(
   makeNumericParam("nu", lower = 0.001, upper = 0.2),
   makeNumericParam("epsilon", lower = 0.0005, upper = 0.1),
   makeDiscreteLearnerParam(id = "bl2", default = "bbs", values = c("bbs"), tunable = F),
-  makeIntegerLearnerParam(id = "max_depth", lower = 3, upper = 8, tunable = T),
-  makeIntegerLearnerParam(id = "df_spline", lower = 2L, upper = 5L, tunable = T)
+  makeIntegerLearnerParam(id = "max_depth", lower = 3, upper = 8, tunable = T)
 )
 
-icb.spline = makeTuneWrapper("regr.icb", resampling = inner, par.set = num_ps_spline,
+icb.spline = makeTuneWrapper("classif.icb", resampling = inner, par.set = num_ps_spline,
                              control = ctrl)
 
 r.icb.spline = resample(icb.spline, tsk, resampling = outer, extract = getTuneResult)
@@ -115,7 +114,7 @@ ps_ksvm = makeParamSet(
   makeNumericParam("sigma", lower = -15, upper = 15, trafo = function(x) 2^x)
 )
 
-ksvm = makeTuneWrapper("regr.ksvm", resampling = inner, par.set = ps_ksvm,
+ksvm = makeTuneWrapper("classif.ksvm", resampling = inner, par.set = ps_ksvm,
                        control = ctrl, show.info = FALSE)
 
 r.ksvm = resample(ksvm, tsk, resampling = outer, extract = getTuneResult)
@@ -127,21 +126,21 @@ r.ksvm = resample(ksvm, tsk, resampling = outer, extract = getTuneResult)
 params.rf <- makeParamSet(makeIntegerParam("mtry",lower = 2,upper = 5),
                           makeIntegerParam("nodesize",lower = 5,upper = 50),
                           makeIntegerParam("ntree", lower = 100, upper = 1000))
-rf = makeTuneWrapper("regr.randomForest", resampling = inner, par.set = params.rf,
+rf = makeTuneWrapper("classif.randomForest", resampling = inner, par.set = params.rf,
                      control = ctrl, show.info = FALSE)
 r.rf = resample(rf, tsk, resampling = outer, extract = getTuneResult)
 
 
 # linear model
-lm = makeLearner("regr.lm")
-r.lm = resample(lm, tsk, resampling = outer)
+logreg = makeLearner("classif.logreg")
+r.logreg = resample(logreg, tsk, resampling = outer)
 
 
 # gamboost
 params.gamboost <- makeParamSet(makeIntegerParam("mstop", lower = 50, upper = 1000),
                                 makeNumericParam("nu", lower = 0.01, upper = 0.2)
 )
-gamb = makeTuneWrapper("regr.gamboost", resampling = inner, par.set = params.gamboost,
+gamb = makeTuneWrapper("classif.gamboost", resampling = inner, par.set = params.gamboost,
                        control = ctrl, show.info = FALSE)
 r.gamb = resample(gamb, tsk, resampling = outer, extract = getTuneResult)
 
@@ -149,7 +148,7 @@ r.gamb = resample(gamb, tsk, resampling = outer, extract = getTuneResult)
 # glmboost
 params.glmboost <- makeParamSet(makeIntegerParam("mstop", lower = 50, upper = 1000),
                                 makeNumericParam("nu", lower = 0.01, upper = 0.2))
-glmb = makeTuneWrapper("regr.glmboost", resampling = inner, par.set = params.glmboost,
+glmb = makeTuneWrapper("classif.glmboost", resampling = inner, par.set = params.glmboost,
                        control = ctrl, show.info = FALSE)
 r.glmb = resample(glmb, tsk, resampling = outer, extract = getTuneResult)
 
@@ -159,7 +158,7 @@ params.rpart = makeParamSet(
   makeIntegerParam("maxdepth", lower = 1, upper = 20),
   makeNumericParam("cp", lower = 0, upper = 1)
 )
-rpart = makeTuneWrapper("regr.rpart", resampling = inner, par.set = params.rpart,
+rpart = makeTuneWrapper("classif.rpart", resampling = inner, par.set = params.rpart,
                         control = ctrl, show.info = FALSE)
 r.rpart = resample(rpart, tsk, resampling = outer, extract = getTuneResult)
 
@@ -169,7 +168,7 @@ params.xgboost = makeParamSet(
   makeIntegerParam ("max_depth" , lower = 1, upper = 10),
   makeIntegerParam("nrounds", lower = 1, upper = 1000)
 )
-xgb = makeTuneWrapper("regr.xgboost", resampling = inner, par.set = params.xgboost,
+xgb = makeTuneWrapper("classif.xgboost", resampling = inner, par.set = params.xgboost,
                       control = ctrl, show.info = FALSE)
 r.xgb = resample(xgb, tsk, resampling = outer, extract = getTuneResult)
 

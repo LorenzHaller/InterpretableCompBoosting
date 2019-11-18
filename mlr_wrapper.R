@@ -574,13 +574,13 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   iteration <- iteration + 1 
   
   mb_tree = blackboost(formula = formula, data = data, offset = fitted_values,
-                       control = boost_control(nu = nu, mstop = 1),
+                       control = boost_control(nu = nu, mstop = 1), family = Binomial(),
                        tree_controls = partykit::ctree_control(
                          teststat = "quad",
                          testtype = "Teststatistic",
                          mincriterion = 0,
-                         minsplit = min_split, 
-                         minbucket = min_bucket,
+                         minsplit = 10, 
+                         minbucket = 4,
                          maxdepth = 2, 
                          saveinfo = FALSE))
   
@@ -623,13 +623,13 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   iteration <- iteration + 1 
   
   mb_tree_max = blackboost(formula = formula, data = data, offset = fitted_values,
-                           control = boost_control(nu = nu, mstop = 1),
+                           control = boost_control(nu = nu, mstop = 1), family = Binomial(),
                            tree_controls = partykit::ctree_control(
                              teststat = "quad",
                              testtype = "Teststatistic",
                              mincriterion = 0,
-                             minsplit = min_split, 
-                             minbucket = min_bucket,
+                             minsplit = 10, 
+                             minbucket = 4,
                              maxdepth = max_depth, 
                              saveinfo = FALSE))
   
