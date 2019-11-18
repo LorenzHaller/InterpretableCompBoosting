@@ -68,7 +68,7 @@ wine.task = makeRegrTask(data = wine_data, target = "quality")
 
 
 # Create list of all tasks
-tasks = list(bh.task, cpmp.task, wages.task, creditg.task, kin8nm.task, wine.task)
+tasks = list(bh.task, puma.task, wages.task, creditg.task, kin8nm.task, wine.task)
 
 
 ########################## Learners #################################################
@@ -89,7 +89,7 @@ base.learners.regr = list(
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = puma.task
+tsk = wine.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
