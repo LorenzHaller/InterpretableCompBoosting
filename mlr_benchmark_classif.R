@@ -48,6 +48,7 @@ bank.task = makeClassifTask(data = bank, target = "Class")
 ## Task 3: dis
 dis.OML.task = getOMLTask(146239)
 dis = dis.OML.task$input$data.set$data
+dis = dis[,! colnames(dis) %in% c("hypopituitary","TBG")]
 dis.task = makeClassifTask(data = dis, target = "class")
 
 ## Task 4: Japanese Vowels
@@ -69,7 +70,7 @@ pollen.task = makeClassifTask(data = pollen, target = "binaryClass")
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = bank.task
+tsk = Jap.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
