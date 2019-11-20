@@ -83,7 +83,7 @@ outer = makeResampleDesc("CV", iters = 5L)
 set.seed(177)
 num_ps_tree = makeParamSet(
   makeNumericParam("nu", lower = 0.001, upper = 0.2),
-  makeNumericParam("epsilon", lower = 0.0005, upper = 0.1),
+  makeNumericParam("epsilon", lower = 0.001, upper = 0.1),
   makeDiscreteLearnerParam(id = "bl2", default = "btree", values = c("btree"), tunable = F),
   makeIntegerLearnerParam(id = "max_depth", lower = 3, upper = 8, tunable = T)
 )
