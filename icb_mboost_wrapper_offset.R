@@ -34,8 +34,10 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     data <- data[,colnames(data) %in% all_vars]
   }
   
+  data <- droplevels(data)
+  
   # Make one-hot encoding for factor variables
-  dummies <- dummyVars(" ~ .", data = data)
+  dummies <- dummyVars(" ~ .", data = data, fullRank = T)
   data <- data.frame(predict(dummies, newdata = data))
   
   # Create mlr task to get full formula
@@ -116,6 +118,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
   # Initialize the current iteration number
   iteration <- 1
+  
   
   # Start with an initial mboost iteration
   mb_linear <- mboost::mboost(formula = formula, data = data, family = family, offset = fit_0,

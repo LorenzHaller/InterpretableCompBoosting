@@ -44,7 +44,7 @@ formula <- count ~ time + season + holiday + workingday + weather + temp + atemp
 
 
 # Split the data in training and test data (75/25 split)
-set.seed(2807)
+set.seed(280795)
 sample <- sample.int(n = nrow(data), size = floor(.66*nrow(data)), replace = F)
 train <- data[sample, ]
 test  <- data[-sample, ]
@@ -95,7 +95,7 @@ pdp_function(icb_object = micb_wrapper)
 # Plot number of features over time
 source("helper_functions.R")
 plot.icb(micb_object = micb_wrapper, predict_object = pred, fcount = T,
-         data_name = "Boston Housing")
+         data_name = "Bike")
   
   
 

@@ -48,6 +48,8 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
     data <- data[,colnames(data) %in% all_vars]
   }
   
+  data <- droplevels(data)
+  
   # Make one-hot encoding for factor variables
   dummies <- dummyVars(" ~ .", data = data, fullRank = T)
   data <- data.frame(predict(dummies, newdata = data))
@@ -296,8 +298,10 @@ predictLearner.regr.icb = function (.learner, .model, .newdata, ...)
   icb_object <- .model$learner.model
   X_new <- na.omit(.newdata)
   
+  X_new <- droplevels(X_new)
+  
   # Make one-hot encoding for factor variables
-  dummies <- dummyVars(" ~ .", data = X_new)
+  dummies <- dummyVars(" ~ .", data = X_new, fullRank = T)
   X_new <- data.frame(predict(dummies, newdata = X_new))
   
   # Only allow the feature which have been in the training data
@@ -427,8 +431,10 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   target_data <- data.frame(data[,target])
   colnames(target_data) <- target
   
+  data <- droplevels(data)
+  
   # Make one-hot encoding for factor variables
-  dummies <- dummyVars(" ~ .", data = data[,colnames(data) != target])
+  dummies <- dummyVars(" ~ .", data = data[,colnames(data) != target], fullRank = T)
   data <- data.frame(predict(dummies, newdata = data[,colnames(data) != target]))
   data <- data.frame(data,target_data)
   
@@ -703,8 +709,10 @@ predictLearner.classif.icb = function (.learner, .model, .newdata, ...)
   icb_object <- .model$learner.model
   X_new <- na.omit(.newdata)
   
+  X_new <- droplevels(X_new)
+  
   # Make one-hot encoding for factor variables
-  dummies <- dummyVars(" ~ .", data = X_new)
+  dummies <- dummyVars(" ~ .", data = X_new, fullRank = T)
   X_new <- data.frame(predict(dummies, newdata = X_new))
   
   # Only allow the feature which have been in the training data

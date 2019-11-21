@@ -36,8 +36,10 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     }
   }
   
+  X_new <- droplevels(X_new)
+  
   # Make one-hot encoding for factor variables
-  dummies <- dummyVars(" ~ .", data = X_new)
+  dummies <- dummyVars(" ~ .", data = X_new, fullRank = T)
   X_new <- data.frame(predict(dummies, newdata = X_new))
   
   # Only allow the feature which have been in the training data
