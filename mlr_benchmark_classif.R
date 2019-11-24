@@ -67,10 +67,16 @@ pollen = pollen.OML.task$input$data.set$data
 pollen.task = makeClassifTask(data = pollen, target = "binaryClass")
 
 
+## Task : car
+car.OML.task = getOMLTask(3854)
+car = car.OML.task$input$data.set$data
+car.task = makeClassifTask(data = car, target = "binaryClass")
+
+
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = pollen.task
+tsk = car.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
