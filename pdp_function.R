@@ -32,7 +32,7 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     if(method == "bbs"){
       ## Extract the spline design matrix for the feature
       
-      spline_string = paste("icb_object$Prediction_Models$Spline$coef()$`bbs(",feature_name,")`",sep="")
+      spline_string = paste("icb_object$Prediction_Models$Spline$coef()$`bbs(",feature_name,", df = dfbase)`",sep="")
       spline_coefficients = eval(parse(text = spline_string))
         
         
@@ -52,7 +52,7 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
       
       
       if(!is.null(linear_coefficients[[1]])){
-        prod = basis %*% spline_coefficients[[1]] + intercept + slope * data_temp[,1]
+        prod = basis %*% spline_coefficients + intercept + slope * data_temp[,1]
         sum_linear = intercept + slope * data_temp[,1]
         sum_linear = as.matrix(sum_linear)
       } else{

@@ -72,7 +72,7 @@ source("family.R")
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
-                                            target_class = "Gaussian", bl2 = "btree",
+                                            target_class = "Gaussian", bl2 = "bbs",
                                             epsilon = 0.005, max_depth = 4)
 
 # Make predictions
