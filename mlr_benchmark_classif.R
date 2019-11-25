@@ -76,7 +76,7 @@ car.task = makeClassifTask(data = car, target = "binaryClass")
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = car.task
+tsk = Jap.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
@@ -105,7 +105,8 @@ num_ps_spline = makeParamSet(
   makeNumericParam("nu", lower = 0.001, upper = 0.2),
   makeNumericParam("epsilon", lower = 0.0005, upper = 0.1),
   makeDiscreteLearnerParam(id = "bl2", default = "bbs", values = c("bbs"), tunable = F),
-  makeIntegerLearnerParam(id = "max_depth", lower = 3, upper = 8, tunable = T)
+  makeIntegerLearnerParam(id = "max_depth", lower = 3, upper = 8, tunable = T),
+  makeIntegerLearnerParam(id = "df_spline", lower = 2L, upper = 5L, tunable = T)
 )
 
 icb.spline = makeTuneWrapper("classif.icb", resampling = inner, par.set = num_ps_spline,

@@ -3,8 +3,8 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
   oldw <- getOption("warn")
   options(warn = -1)
   
-  data = icb_object$Data[,-1]
-  feature_names = colnames(data)
+  data = icb_object$Data
+  feature_names = icb_object$FeatureNames
   
   method <- icb_object$Input_Parameters[[7]]
   
@@ -18,18 +18,24 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     data_temp = data[,w,drop=FALSE]
     feature_name = feature_names[w]
     
-    linear_coefficients = icb_object$Prediction_Models$Linear$coef()[w]
+    coeff_string = paste("icb_object$Prediction_Models$Linear$coef()$`bols(",feature_name,")`",sep="")
+    linear_coefficients = eval(parse(text = coeff_string))
     
     if(!is.null(linear_coefficients[[1]])){
-      intercept = linear_coefficients[[1]][[1]]
-      slope = linear_coefficients[[1]][[2]]
+      intercept = linear_coefficients[[1]]
+      slope = linear_coefficients[[2]]
     }
     
-    spline_coefficients = icb_object$Prediction_Models$Spline$coef()[w]
+    #spline_coefficients = icb_object$Prediction_Models$Spline$coef()[w]
     
     
     if(method == "bbs"){
       ## Extract the spline design matrix for the feature
+      
+      spline_string = paste("icb_object$Prediction_Models$Spline$coef()$`bbs(",feature_name,")`",sep="")
+      spline_coefficients = eval(parse(text = spline_string))
+        
+        
       iteration <- icb_object$`Transition Iterations`[1]+1
       
       object <- icb_object$Prediction_Models$Spline
@@ -66,6 +72,7 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
       # }
     } else if(method == "btree"){
       
+      
       if(!is.null(linear_coefficients[[1]])){
         pr = predict(icb_object$Prediction_Models$Spline, newdata = data, which = w) + intercept + slope * data_temp[,1]
         pr = as.matrix(pr)
@@ -88,7 +95,7 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     if(!is.factor(data_temp[,1])){
       if(!(pr[1] == 0)){
         plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
-             ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
+             ylab="Feature effect on the predicted ozone",xlab=colnames(data_temp)[1], ylim = ylim)
       }
       if(!is.null(linear_coefficients[[1]])){
         points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")
