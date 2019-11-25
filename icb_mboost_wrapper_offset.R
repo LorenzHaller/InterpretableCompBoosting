@@ -34,11 +34,21 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     data <- data[,colnames(data) %in% all_vars]
   }
   
+  
+  target_data <- data.frame(data[,target])
+  colnames(target_data) <- target
+  
   data <- droplevels(data)
   
   # Make one-hot encoding for factor variables
-  dummies <- dummyVars(" ~ .", data = data, fullRank = T)
-  data <- data.frame(predict(dummies, newdata = data))
+  if(target_class=="Binomial"){
+    dummies <- dummyVars(" ~ .", data = data[,colnames(data) != target], fullRank = T)
+    data <- data.frame(predict(dummies, newdata = data[,colnames(data) != target]))
+    data <- data.frame(data,target_data)
+  } else if(target_class == "Gaussian"){
+    dummies <- dummyVars(" ~ .", data = data, fullRank = T)
+    data <- data.frame(predict(dummies, newdata = data))
+  }
   
   # Create mlr task to get full formula
   formula <- as.formula(paste(target,"~ ."))
@@ -170,10 +180,18 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
     iteration <- iteration + 1 
 
-    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
-                                 baselearner = "btree", offset = mb_linear$fitted(),
-                                 control = boost_control(nu = nu, mstop = 1))
     
+    if(bl2 == "bbs"){
+      mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+                                   baselearner = bl2, dfbase = df_spline,
+                                   offset = mb_linear$fitted(),
+                                   control = boost_control(nu = nu, mstop = 1))
+    } else{
+      mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+                                   baselearner = bl2,
+                                   offset = mb_linear$fitted(),
+                                   control = boost_control(nu = nu, mstop = 1))
+    }
     # Check if feature added is new
     if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
       feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))

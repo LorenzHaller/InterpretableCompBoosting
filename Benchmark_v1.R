@@ -31,6 +31,13 @@ exclude_cols = c("datetime")
 data = bike[,!colnames(bike) %in% exclude_cols]
 formula <- count ~ time + season + holiday + workingday + weather + temp + atemp + humidity + windspeed + dayOfWeek
 
+# Classification Data: 
+bank.OML.task = getOMLTask(9899)
+bank = bank.OML.task$input$data.set$data
+#bank.task = makeClassifTask(data = bank, target = "Class")
+data = bank
+formula <- Class ~ V1 + V2 + V3 + V4 + V5 + V6 + V7 + V8 + V9 + V10 + V11 + V12 + V13 + V14 + V15 + V16
+
 # Add another data set to explore interactions
 # library(jtools)
 # states <- as.data.frame(state.x77)
