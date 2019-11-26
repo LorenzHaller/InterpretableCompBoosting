@@ -72,12 +72,12 @@ source("family.R")
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
-                                            target_class = "Gaussian", bl2 = "bbs",
+                                            target_class = "Gaussian", bl2 = "btree",
                                             epsilon = 0.005, max_depth = 4)
 
 # Make predictions
 source("icb_predict_wrapper_offset.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="count")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="medv")
 
 # Show results in table
 source("helper_functions.R")
@@ -88,13 +88,13 @@ stage_risk(pred_object = pred)
 source("helper_functions.R")
 train_list = list()
 train_list[[1]] = test_bh
-train_list[[2]] = test_Air
+train_list[[2]] = test_air
 data_risk_table(icb_list = train_list, train = F, 
                 data_names = c("Boston Housing", "Airquality"))
 
 # Show individual results for all observations in predict data
 source("helper_functions.R")
-individual_stage_risk(pred, subset = c(1,2,34))
+individual_stage_risk(test_air, subset = c(1,7,34))
 
 # Visualize feature effects
 source("pdp_function.R")
@@ -102,8 +102,8 @@ pdp_function(icb_object = micb_wrapper)
 
 # Plot number of features over time
 source("helper_functions.R")
-plot.icb(micb_object = micb_wrapper, predict_object = pred, fcount = T,
-         data_name = "Bike")
+plot.icb(micb_object = train_air, predict_object = test_air, fcount = T,
+         data_name = "Airquality")
   
   
 
