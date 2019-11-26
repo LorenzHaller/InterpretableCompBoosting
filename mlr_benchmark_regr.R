@@ -33,28 +33,28 @@ bh.OML.task = getOMLTask(4857)
 bh = bh.OML.task$input$data.set$data
 bh.task = makeRegrTask(data = bh, target = "MEDV")
 
-## Task 2: CPMP-2015-regression
-cpmp.OML.task = getOMLTask(189931)
-cpmp = cpmp.OML.task$input$data.set$data
-cpmp = cpmp[,!colnames(cpmp) %in% c("instance_id")]
-cpmp.task = makeRegrTask(data = cpmp, target = "runtime")
+# ## Task 2: CPMP-2015-regression
+# cpmp.OML.task = getOMLTask(189931)
+# cpmp = cpmp.OML.task$input$data.set$data
+# cpmp = cpmp[,!colnames(cpmp) %in% c("instance_id")]
+# cpmp.task = makeRegrTask(data = cpmp, target = "runtime")
 
-## Task 3: cps_85_wages
+## Task 2: cps_85_wages
 wages.OML.task = getOMLTask(4859)
 wages = wages.OML.task$input$data.set$data
 wages.task = makeRegrTask(data = wages, target = "WAGE")
 
-## Task 4: credit-g
+## Task 3: credit-g
 creditg.OML.task = getOMLTask(146813)
 creditg = creditg.OML.task$input$data.set$data
 creditg.task = makeRegrTask(data = creditg, target = "credit_amount")
 
-## Task 5: kin8nm 
+## Task 4: kin8nm 
 oml.task_2280 = getOMLTask(2280)
 kin8nm = oml.task_2280$input$data.set$data
 kin8nm.task = makeRegrTask(data = kin8nm, target = "y")
 
-## Task : puma8NH
+## Task 5: puma8NH
 puma.OML.task = getOMLTask(2313)
 puma8NH = puma.OML.task$input$data.set$data
 puma.task = makeRegrTask(data = puma8NH, target = "thetadd3")

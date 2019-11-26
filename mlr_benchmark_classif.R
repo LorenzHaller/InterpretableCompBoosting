@@ -45,11 +45,10 @@ bank.OML.task = getOMLTask(9899)
 bank = bank.OML.task$input$data.set$data
 bank.task = makeClassifTask(data = bank, target = "Class")
 
-## Task 3: dis
-dis.OML.task = getOMLTask(146239)
-dis = dis.OML.task$input$data.set$data
-dis = dis[,! colnames(dis) %in% c("hypopituitary","TBG")]
-dis.task = makeClassifTask(data = dis, target = "class")
+## Task 3: car
+car.OML.task = getOMLTask(3854)
+car = car.OML.task$input$data.set$data
+car.task = makeClassifTask(data = car, target = "binaryClass")
 
 ## Task 4: Japanese Vowels
 Jap.OML.task = getOMLTask(3839)
@@ -67,10 +66,6 @@ pollen = pollen.OML.task$input$data.set$data
 pollen.task = makeClassifTask(data = pollen, target = "binaryClass")
 
 
-## Task : car
-car.OML.task = getOMLTask(3854)
-car = car.OML.task$input$data.set$data
-car.task = makeClassifTask(data = car, target = "binaryClass")
 
 
 

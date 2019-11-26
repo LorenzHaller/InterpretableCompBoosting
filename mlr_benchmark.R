@@ -93,7 +93,7 @@ tasks = list(bh.task, oz.task, kin8nm.task, wine.task, puma.task)
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = bike.task
+tsk = spam.task
 ctrl = makeTuneControlRandom(maxit = 30L)
 rdesc_tune = makeResampleDesc("CV", iters = 3L)
 
@@ -229,25 +229,25 @@ res
 
 # Choose the resampling strategy
 rdesc = makeResampleDesc("Holdout")
-rdesc_v2 = makeResampleDesc("CV",iters=10)
+rdesc_v2 = makeResampleDesc("CV",iters=5)
 
 
 
 # ### Manually looking for the optimal parameter
 # 
-# icb.learner0 = makeLearner("regr.icb",id="btree_0.1_0.05",par.vals = list(nu=0.1, epsilon = 0.05, bl2="btree", max_depth = 4))
+icb.learner0 = makeLearner("regr.icb",id="btree_0.1_0.05",par.vals = list(nu=0.1, epsilon = 0.05, bl2="btree", max_depth = 4))
 # icb.learner1 = makeLearner("regr.icb",id="btree_0.1_0.025",par.vals = list(nu=0.1, epsilon = 0.025, bl2="btree", max_depth = 4))
-# icb.learner2 = makeLearner("regr.icb",id="btree_0.1_0.01",par.vals = list(nu=0.1, epsilon = 0.01, bl2="btree", max_depth = 4))
-# icb.learner3 = makeLearner("regr.icb",id="btree_0.1_0.005",par.vals = list(nu=0.1, epsilon = 0.005, bl2="btree", max_depth = 4))
-# icb.learner4 = makeLearner("regr.icb",id="btree_0.1_0.001",par.vals = list(nu=0.1, epsilon = 0.001, bl2="btree", max_depth = 4))
+icb.learner2 = makeLearner("regr.icb",id="btree_0.1_0.01",par.vals = list(nu=0.1, epsilon = 0.01, bl2="btree", max_depth = 4))
+icb.learner3 = makeLearner("regr.icb",id="btree_0.1_0.005",par.vals = list(nu=0.1, epsilon = 0.005, bl2="btree", max_depth = 4))
+icb.learner4 = makeLearner("regr.icb",id="btree_0.1_0.001",par.vals = list(nu=0.1, epsilon = 0.001, bl2="btree", max_depth = 4))
 # icb.learner4.1 = makeLearner("regr.icb",id="btree_0.1_0.0005",par.vals = list(nu=0.1, epsilon = 0.0005, bl2="btree", max_depth = 4))
 # 
 # 
-# icb.learner5 = makeLearner("regr.icb",id="btree_0.05_0.05",par.vals = list(nu=0.05, epsilon = 0.05, bl2="btree", max_depth = 4))
+icb.learner5 = makeLearner("regr.icb",id="btree_0.05_0.05",par.vals = list(nu=0.05, epsilon = 0.05, bl2="btree", max_depth = 4))
 # icb.learner6 = makeLearner("regr.icb",id="btree_0.05_0.025",par.vals = list(nu=0.05, epsilon = 0.025, bl2="btree", max_depth = 4))
-# icb.learner7 = makeLearner("regr.icb",id="btree_0.05_0.01",par.vals = list(nu=0.05, epsilon = 0.01, bl2="btree", max_depth = 4))
-# icb.learner8 = makeLearner("regr.icb",id="btree_0.05_0.005",par.vals = list(nu=0.05, epsilon = 0.005, bl2="btree", max_depth = 4))
-# icb.learner9 = makeLearner("regr.icb",id="btree_0.05_0.001",par.vals = list(nu=0.05, epsilon = 0.001, bl2="btree", max_depth = 4))
+icb.learner7 = makeLearner("regr.icb",id="btree_0.05_0.01",par.vals = list(nu=0.05, epsilon = 0.01, bl2="btree", max_depth = 4))
+icb.learner8 = makeLearner("regr.icb",id="btree_0.05_0.005",par.vals = list(nu=0.05, epsilon = 0.005, bl2="btree", max_depth = 4))
+icb.learner9 = makeLearner("regr.icb",id="btree_0.05_0.001",par.vals = list(nu=0.05, epsilon = 0.001, bl2="btree", max_depth = 4))
 # icb.learner9.1 = makeLearner("regr.icb",id="btree_0.05_0.0005",par.vals = list(nu=0.05, epsilon = 0.0005, bl2="btree", max_depth = 4))
 # 
 # 
@@ -256,36 +256,49 @@ rdesc_v2 = makeResampleDesc("CV",iters=10)
 # icb.learner12 = makeLearner("regr.icb",id="bbs_0.1_0.001",par.vals = list(nu=0.1, epsilon = 0.001, bl2="bbs", max_depth = 4))
 # 
 # 
-# icb_list = list(icb.learner0,icb.learner1,icb.learner2,icb.learner3,icb.learner4,
-#                 icb.learner5,icb.learner6,icb.learner7,icb.learner8,icb.learner9)
-# 
+
 # icb_list_2 = list(icb.learner2,icb.learner3,icb.learner4,icb.learner4.1,
 #                   icb.learner7,icb.learner8,icb.learner9,icb.learner9.1)
 # 
 # icb_list_3 = list(icb.learner2,icb.learner3,icb.learner4,
 #                   icb.learner10,icb.learner11,icb.learner12)
 
+icb.learner0 = makeLearner("classif.icb",id="btree_0.1_0.05",par.vals = list(nu=0.1, epsilon = 0.05, bl2="btree", max_depth = 4))
+# icb.learner1 = makeLearner("regr.icb",id="btree_0.1_0.025",par.vals = list(nu=0.1, epsilon = 0.025, bl2="btree", max_depth = 4))
+icb.learner2 = makeLearner("classif.icb",id="btree_0.1_0.01",par.vals = list(nu=0.1, epsilon = 0.01, bl2="btree", max_depth = 4))
+icb.learner3 = makeLearner("classif.icb",id="btree_0.1_0.005",par.vals = list(nu=0.1, epsilon = 0.005, bl2="btree", max_depth = 4))
+icb.learner4 = makeLearner("classif.icb",id="btree_0.1_0.001",par.vals = list(nu=0.1, epsilon = 0.001, bl2="btree", max_depth = 4))
+# icb.learner4.1 = makeLearner("regr.icb",id="btree_0.1_0.0005",par.vals = list(nu=0.1, epsilon = 0.0005, bl2="btree", max_depth = 4))
+# 
+# 
+icb.learner5 = makeLearner("classif.icb",id="btree_0.05_0.05",par.vals = list(nu=0.05, epsilon = 0.05, bl2="btree", max_depth = 4))
+# icb.learner6 = makeLearner("regr.icb",id="btree_0.05_0.025",par.vals = list(nu=0.05, epsilon = 0.025, bl2="btree", max_depth = 4))
+icb.learner7 = makeLearner("classif.icb",id="btree_0.05_0.01",par.vals = list(nu=0.05, epsilon = 0.01, bl2="btree", max_depth = 4))
+icb.learner8 = makeLearner("classif.icb",id="btree_0.05_0.005",par.vals = list(nu=0.05, epsilon = 0.005, bl2="btree", max_depth = 4))
+icb.learner9 = makeLearner("classif.icb",id="btree_0.05_0.001",par.vals = list(nu=0.05, epsilon = 0.001, bl2="btree", max_depth = 4))
+#
 
-
-
-lrn.list = list(lrn.icb,
-               makeLearner("regr.lm"),
-               regr.gamboost,
-               regr.glmboost,
-               regr.rpart,
-               regr.svm,
-               regr.rf
-               #,regr.xgboost
-               )
+icb_list = list(icb.learner0,icb.learner2,icb.learner3,icb.learner4,
+                icb.learner5,icb.learner7,icb.learner8,icb.learner9)
+# 
+# lrn.list = list(lrn.icb,
+#                makeLearner("regr.lm"),
+#                regr.gamboost,
+#                regr.glmboost,
+#                regr.rpart,
+#                regr.svm,
+#                regr.rf
+#                #,regr.xgboost
+#                )
 
 
 
 
 ################ Make benchmark #########################################################
-parallelStartLocal()
-bmr = benchmark(lrn.list, tsk, rdesc_v2)
+#parallelStartLocal()
+bmr = benchmark(icb_list, bc.task, rdesc_v2)
 # keep fitted models using models=TRUE
-parallelStop()
+#parallelStop()
 
 
 ## Visualize benchmark results ##################################
