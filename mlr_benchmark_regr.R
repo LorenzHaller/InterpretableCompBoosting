@@ -33,6 +33,9 @@ bh.OML.task = getOMLTask(4857)
 bh = bh.OML.task$input$data.set$data
 bh.task = makeRegrTask(data = bh, target = "MEDV")
 
+dummies_bh <- dummyVars(" ~ .", data = bh, fullRank = T)
+bhdata <- data.frame(predict(dummies_bh, newdata = bh))
+gamboost(formula = MEDV ~ CHAS.1 + AGE + PTRATIO, data = bhdata, baselearner = "bbs")
 # ## Task 2: CPMP-2015-regression
 # cpmp.OML.task = getOMLTask(189931)
 # cpmp = cpmp.OML.task$input$data.set$data
@@ -89,7 +92,7 @@ base.learners.regr = list(
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = wine.task
+tsk = bh.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)

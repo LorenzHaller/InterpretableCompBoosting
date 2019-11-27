@@ -296,7 +296,7 @@ icb_list = list(icb.learner0,icb.learner2,icb.learner3,icb.learner4,
 
 ################ Make benchmark #########################################################
 #parallelStartLocal()
-bmr = benchmark(icb_list, bc.task, rdesc_v2)
+bmr = benchmark(icb_list, sonar.task, rdesc_v2)
 # keep fitted models using models=TRUE
 #parallelStop()
 

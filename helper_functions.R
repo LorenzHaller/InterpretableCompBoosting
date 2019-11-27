@@ -44,18 +44,21 @@ stage_risk <- function(micb_object = NULL, pred_object = NULL){
     col_names <- c("Risk left","%-Risk Explanation","Cumulative %-Risk Explanation",
                    "Number of iterations")
     
-    table <- matrix("", nrow = 5, ncol = 4)
+    table <- matrix("", nrow = 7, ncol = 4)
     
     row_names <- c("Intercept Model","Phase 1: Linear","Phase 2: Splines/Tree Stumps",
-                   "Phase 3: Trees (depth=2)","Phase 4: Deeper Trees")
+                   "Phase 3: Trees (depth=2)","Phase 4: Deeper Trees","","Interaction strength")
     
-    table[,1] <- c(initial_risk,risk_stage1,risk_stage2,risk_stage3,risk_stage4)
-    table[,2] <- c("",perc_stage1,perc_stage2,perc_stage3,perc_stage4)
-    table[,3] <- c("",cum_stage1,cum_stage2,cum_stage3,cum_stage4)
+    interaction_strength = (risk_stage2-risk_stage4)/(initial_risk-risk_stage4)
+    interaction_strength = round(interaction_strength,digits=3)
+      
+    table[,1] <- c(initial_risk,risk_stage1,risk_stage2,risk_stage3,risk_stage4,"",interaction_strength)
+    table[,2] <- c("",perc_stage1,perc_stage2,perc_stage3,perc_stage4,"","")
+    table[,3] <- c("",cum_stage1,cum_stage2,cum_stage3,cum_stage4,"","")
     table[,4] <- c(1, length(micb_object$Prediction_Models$Linear$risk()),
                    length(micb_object$Prediction_Models$Spline$risk()),
                    length(micb_object$Prediction_Models$Tree$risk()),
-                   length(micb_object$Prediction_Models$TreeMax$risk()))
+                   length(micb_object$Prediction_Models$TreeMax$risk()),"","")
     
     df <- as.data.frame(table)
     colnames(df) <- col_names
@@ -84,19 +87,22 @@ stage_risk <- function(micb_object = NULL, pred_object = NULL){
     col_names <- c("Risk left","%-Risk Explanation","Cumulative %-Risk Explanation",
                    "Number of iterations")
     
-    table <- matrix("", nrow = 5, ncol = 4)
+    table <- matrix("", nrow = 7, ncol = 4)
     
     row_names <- c("Intercept Model","Phase 1: Linear","Phase 2: Splines/Tree Stumps",
-                   "Phase 3: Trees (depth=2)","Phase 4: Deeper Trees")
+                   "Phase 3: Trees (depth=2)","Phase 4: Deeper Trees","","Interaction strength")
     
-    table[,1] <- c(initial_risk,risk_stage1,risk_stage2,risk_stage3,risk_stage4)
-    table[,2] <- c("",perc_stage1,perc_stage2,perc_stage3,perc_stage4)
-    table[,3] <- c("",cum_stage1,cum_stage2,cum_stage3,cum_stage4)
+    interaction_strength = (risk_stage2-risk_stage4)/(initial_risk-risk_stage4)
+    interaction_strength = round(interaction_strength,digits=3)
+    
+    table[,1] <- c(initial_risk,risk_stage1,risk_stage2,risk_stage3,risk_stage4,"",interaction_strength)
+    table[,2] <- c("",perc_stage1,perc_stage2,perc_stage3,perc_stage4,"","")
+    table[,3] <- c("",cum_stage1,cum_stage2,cum_stage3,cum_stage4,"","")
     table[,4] <- c(1, pred_object$`Transition Iterations`[1]+1,
                    pred_object$`Transition Iterations`[2]-pred_object$`Transition Iterations`[1]+1,
                    pred_object$`Transition Iterations`[3]-pred_object$`Transition Iterations`[2]+1,
                    pred_object$`Transition Iterations`[4]-pred_object$`Transition Iterations`[3]
-                   )
+                   ,"","")
     
     df <- as.data.frame(table)
     colnames(df) <- col_names
