@@ -77,7 +77,7 @@ micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1,
 
 # Make predictions
 source("icb_predict_wrapper_offset.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="medv")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
 
 # Show results in table
 source("helper_functions.R")
