@@ -7,11 +7,16 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
   feature_names = icb_object$FeatureNames
   
   method <- icb_object$Input_Parameters[[7]]
+  df_spline <- icb_object$Input_Parameters[[8]]
   
   which = as.integer(seq(1,dim(data)[2],by=1))
   
+  CATFeatures <- icb_object$CATFeatures
+  
   
   for(w in which){
+    
+    print(w)
     
     ylim = NULL
     
@@ -32,44 +37,81 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     if(method == "bbs"){
       ## Extract the spline design matrix for the feature
       
-      spline_string = paste("icb_object$Prediction_Models$Spline$coef()$`bbs(",feature_name,", df = dfbase)`",sep="")
-      spline_coefficients = eval(parse(text = spline_string))
+      if(isFALSE(CATFeatures[w])){
+        
+        if(!is.null(linear_coefficients[[1]])){
+          pr = predict(icb_object$Prediction_Models$Spline, newdata = data, which = w) + intercept + slope * data_temp[,1]
+          pr = as.matrix(pr)
+          sum_linear = intercept + slope * data_temp[,1]
+          sum_linear = as.matrix(sum_linear)
+        } else{
+          pr = as.matrix(predict(icb_object$Prediction_Models$Spline, newdata = data, which = w))
+        } 
+        
+        # #WAS IMPORTANT
+        # spline_string = paste("icb_object$Prediction_Models$Spline$coef()$`bbs(",feature_name,", df = ",df_spline,")`",sep="")
+        # spline_coefficients = eval(parse(text = spline_string))
+        # 
+        # 
+        # iteration <- icb_object$`Transition Iterations`[1]+1
+        # 
+        # object <- icb_object$Prediction_Models$Spline
+        # basis <- extract(object,"design")[[w]]
+        # knots <- attr(basis,"knots")
+
+        
+        # if(names(object$coef())[w] == paste("bbs(",feature_name,", df = dfbase)",sep="")){
+        #   basis <- extract(object,"design")[[w]]
+        #   knots <- attr(basis,"knots")
+        #   } else{
+        #   iteration <- iteration + 1
+        # }
+        
+        #WAS IMPORTANT
+        # if(!is.null(linear_coefficients[[1]])){
+        #   if(!is.null(spline_coefficients)){
+        #     prod = basis %*% spline_coefficients + intercept + slope * data_temp[,1]
+        #     sum_linear = intercept + slope * data_temp[,1]
+        #     sum_linear = as.matrix(sum_linear)
+        #   } else{
+        #     prod = intercept + slope * data_temp[,1]
+        #   }
+        #   
+        # } else{
+        #   if(!is.null(spline_coefficients)){
+        #     prod = basis %*% spline_coefficients[[1]]
+        #   } else{
+        #     prod = NULL
+        #   }
+        # }            
+        # 
+        # pr = prod
+        # #pr = data_temp * rescaled_linear_coefficients + prod
+        # if (is.null(ylim)) ylim <- range(pr, na.rm = TRUE)
+        # 
+        
+        # if(!is.factor(data_temp[,1])){
+        #   plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
+        #        ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
+        #   if(!is.null(linear_coefficients[[1]])){
+        #     points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")
+        #   }
+        # }
         
         
-      iteration <- icb_object$`Transition Iterations`[1]+1
+      } else if(isTRUE(CATFeatures[w])){
+        
+        if(!is.null(linear_coefficients[[1]])){
+          pr = predict(icb_object$Prediction_Models$Spline, newdata = data, which = w) + intercept + slope * data_temp[,1]
+          pr = as.matrix(pr)
+          sum_linear = intercept + slope * data_temp[,1]
+          sum_linear = as.matrix(sum_linear)
+        } else{
+          pr = as.matrix(predict(icb_object$Prediction_Models$Spline, newdata = data, which = w))
+        } 
+        
+      }
       
-      object <- icb_object$Prediction_Models$Spline
-      basis <- extract(object,"design")[[w]]
-      knots <- attr(basis,"knots")
-      
-      
-      # if(names(object$coef())[w] == paste("bbs(",feature_name,", df = dfbase)",sep="")){
-      #   basis <- extract(object,"design")[[w]]
-      #   knots <- attr(basis,"knots")
-      #   } else{
-      #   iteration <- iteration + 1
-      # }
-      
-      
-      if(!is.null(linear_coefficients[[1]])){
-        prod = basis %*% spline_coefficients + intercept + slope * data_temp[,1]
-        sum_linear = intercept + slope * data_temp[,1]
-        sum_linear = as.matrix(sum_linear)
-      } else{
-        prod = basis %*% spline_coefficients[[1]]
-      }            
-      
-      pr = prod
-      #pr = data_temp * rescaled_linear_coefficients + prod
-      if (is.null(ylim)) ylim <- range(pr, na.rm = TRUE)
-      
-      # if(!is.factor(data_temp[,1])){
-      #   plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
-      #        ylab="",xlab=colnames(data_temp)[1], ylim = ylim)
-      #   if(!is.null(linear_coefficients[[1]])){
-      #     points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")
-      #   }
-      # }
     } else if(method == "btree"){
       
       
@@ -93,9 +135,11 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     }
     
     if(!is.factor(data_temp[,1])){
-      if(!(pr[1] == 0)){
-        plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
-             ylab="Feature effect on the predicted ozone",xlab=colnames(data_temp)[1], ylim = ylim)
+      if(!is.null(pr)){
+        if(!(pr[1] == 0)){
+          plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
+               ylab="Feature effect on the predicted ozone",xlab=colnames(data_temp)[1], ylim = ylim)
+        }
       }
       if(!is.null(linear_coefficients[[1]])){
         points(sort(data_temp[,1]), sum_linear[order(data_temp[,1]),1],type="l")

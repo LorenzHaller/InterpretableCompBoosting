@@ -50,6 +50,11 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     data <- data.frame(predict(dummies, newdata = data))
   }
   
+  # Create a vector that contains the number of unique values for every feature
+  len_vector <- as.vector(sapply(sapply(data, unique), length))
+  len_boolean <- len_vector < 3
+  len_boolean <- len_boolean[!colnames(data) %in% target]
+  
   # Create mlr task to get full formula
   formula <- as.formula(paste(target,"~ ."))
   
@@ -182,10 +187,34 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
 
     
     if(bl2 == "bbs"){
-      mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
-                                   baselearner = bl2, dfbase = df_spline,
-                                   offset = mb_linear$fitted(),
-                                   control = boost_control(nu = nu, mstop = 1))
+      
+      # Create a spline formula where for factors tree stumps are used
+      formula_features <- c()
+      
+      for(f in 1:length(f_names)){
+        if(len_vector[f] < 3){
+          feat_bl <- paste0("btree(",f_names[f],",tree_controls = partykit::ctree_control(maxdepth=1, minbucket=",min_bucket,
+                            ",minsplit=",min_split,"))")
+          formula_features <- c(formula_features,feat_bl)
+        } else{
+          feat_bl <- paste0("bbs(",f_names[f],",df = ",df_spline,")")
+          formula_features <- c(formula_features,feat_bl)
+        }
+      }
+      
+      feat_string <- paste(formula_features,collapse = " + ")
+      target_feat_string <- as.formula(paste(target," ~ ", feat_string))
+      
+      mb_spline <- mboost::gamboost(formula = target_feat_string, data = data, 
+                                    family = family,
+                                    offset = mb_linear$fitted(),
+                                    control = boost_control(nu = nu, mstop = 1)) 
+        
+      # mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+      #                              baselearner = bl2, dfbase = df_spline,
+      #                              offset = mb_linear$fitted(),
+      #                              control = boost_control(nu = nu, mstop = 1))
+      
     } else{
       mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
                                    baselearner = bl2,
@@ -234,10 +263,34 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     iteration <- iteration + 1 
     
     if(bl2 == "bbs"){
-      mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
-                                 baselearner = bl2, dfbase = df_spline,
-                                 offset = mb_linear$fitted(),
-                                 control = boost_control(nu = nu, mstop = 1))
+      
+      # Create a spline formula where for factors tree stumps are used
+      formula_features <- c()
+      
+      for(f in 1:length(f_names)){
+        if(len_vector[f] < 3){
+          feat_bl <- paste0("btree(",f_names[f],",tree_controls = partykit::ctree_control(maxdepth=1, minbucket=",min_bucket,
+                            ",minsplit=",min_split,"))")
+          formula_features <- c(formula_features,feat_bl)
+        } else{
+          feat_bl <- paste0("bbs(",f_names[f],",df = ",df_spline,")")
+          formula_features <- c(formula_features,feat_bl)
+        }
+      }
+      
+      feat_string <- paste(formula_features,collapse = " + ")
+      target_feat_string <- as.formula(paste(target," ~ ", feat_string))
+      
+      mb_spline <- mboost::gamboost(formula = target_feat_string, data = data, 
+                                    family = family,
+                                    offset = mb_linear$fitted(),
+                                    control = boost_control(nu = nu, mstop = 1)) 
+      
+      # mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+      #                            baselearner = bl2, dfbase = df_spline,
+      #                            offset = mb_linear$fitted(),
+      #                            control = boost_control(nu = nu, mstop = 1))
+      
     } else{
       mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
                                    baselearner = bl2,
@@ -433,9 +486,10 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees,transition_trees_max)
   return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk()[-1],mb_tree$risk()[-1],mb_tree_max$risk()[-1]) / dim(data)[1]
   return_list[["Prediction_Models"]] <- Prediction_Models
-  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, levels, bl2)
+  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, levels, bl2, df_spline)
   return_list[["Data"]] <- data[,!colnames(data) %in% target]
   return_list[["FeatureNames"]] <- f_names
+  return_list[["CATFeatures"]] <- len_boolean
   return_list[["Feature_Counter"]] <- feature_counter
   return_list[["Riskfunction"]] <- riskfct
   if(target_class == "Binomial"){
