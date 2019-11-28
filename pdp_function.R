@@ -16,7 +16,7 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
   
   for(w in which){
     
-    print(w)
+    #print(w)
     
     ylim = NULL
     

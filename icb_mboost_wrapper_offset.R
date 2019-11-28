@@ -351,7 +351,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   #                    control = boost_control(nu = nu, mstop = 1))
   
   mb_tree = blackboost(formula = formula, data = data, offset = fitted_values,
-                          control = boost_control(nu = nu, mstop = 1),
+                          control = boost_control(nu = nu, mstop = 1), family = family,
                            tree_controls = partykit::ctree_control(
                              teststat = "quad",
                              testtype = "Teststatistic",
@@ -421,7 +421,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   #                  control = boost_control(nu = nu, mstop = 1))
   
   mb_tree_max = blackboost(formula = formula, data = data, offset = fitted_values,
-                       control = boost_control(nu = nu, mstop = 1),
+                       control = boost_control(nu = nu, mstop = 1), family = family,
                        tree_controls = partykit::ctree_control(
                          teststat = "quad",
                          testtype = "Teststatistic",
