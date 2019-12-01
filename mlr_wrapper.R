@@ -131,10 +131,32 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   iteration <- iteration + 1 
     
   if(bl2 == "bbs"){
-    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
-                                 baselearner = bl2, dfbase = df_spline,
-                                 offset = mb_linear$fitted(),
-                                 control = boost_control(nu = nu, mstop = 1))
+    
+    # Create a spline formula where for factors tree stumps are used
+    formula_features <- c()
+    
+    for(f in 1:length(f_names)){
+      if(len_vector[f] < 3){
+        feat_bl <- paste0("btree(",f_names[f],",tree_controls = partykit::ctree_control(maxdepth=1))")
+        formula_features <- c(formula_features,feat_bl)
+      } else{
+        feat_bl <- paste0("bbs(",f_names[f],",df = ",df_spline,")")
+        formula_features <- c(formula_features,feat_bl)
+      }
+    }
+    
+    feat_string <- paste(formula_features,collapse = " + ")
+    target_feat_string <- as.formula(paste(target," ~ ", feat_string))
+    
+    mb_spline <- mboost::gamboost(formula = target_feat_string, data = data, 
+                                  family = family,
+                                  offset = mb_linear$fitted(),
+                                  control = boost_control(nu = nu, mstop = 1)) 
+    
+    # mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+    #                              baselearner = bl2, dfbase = df_spline,
+    #                              offset = mb_linear$fitted(),
+    #                              control = boost_control(nu = nu, mstop = 1))
   } else{
     mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
                                  baselearner = bl2,
@@ -534,10 +556,28 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   
   
   if(bl2 == "bbs"){
-    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
-                                 baselearner = bl2, dfbase = df_spline,
-                                 offset = mb_linear$fitted(),
-                                 control = boost_control(nu = nu, mstop = 1))
+    
+    # Create a spline formula where for factors tree stumps are used
+    formula_features <- c()
+    
+    for(f in 1:length(f_names)){
+      if(len_vector[f] < 3){
+        feat_bl <- paste0("btree(",f_names[f],",tree_controls = partykit::ctree_control(maxdepth=1))")
+        formula_features <- c(formula_features,feat_bl)
+      } else{
+        feat_bl <- paste0("bbs(",f_names[f],",df = ",df_spline,")")
+        formula_features <- c(formula_features,feat_bl)
+      }
+    }
+    
+    feat_string <- paste(formula_features,collapse = " + ")
+    target_feat_string <- as.formula(paste(target," ~ ", feat_string))
+    
+    mb_spline <- mboost::gamboost(formula = target_feat_string, data = data, 
+                                  family = family,
+                                  offset = mb_linear$fitted(),
+                                  control = boost_control(nu = nu, mstop = 1)) 
+    
   } else{
     mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
                                  baselearner = bl2,

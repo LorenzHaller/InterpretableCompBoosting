@@ -24,9 +24,9 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
       #y <- (c(-1, 1)[as.integer(y)])
       y_int <- numeric(length(y))
       for(l in 1:length(y)){
-        if(y[l] == icb_object$Input_Parameters[[6]]){
+        if(y[l] == icb_object$Input_Parameters[[8]]){
           y_int[l] <- -1
-        }else if(y[l] == icb_object$Input_Parameters[[7]]){
+        }else if(y[l] == icb_object$Input_Parameters[[9]]){
           y_int[l] <- 1
         }
       }
