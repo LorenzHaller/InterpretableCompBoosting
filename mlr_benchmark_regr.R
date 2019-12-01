@@ -92,7 +92,7 @@ base.learners.regr = list(
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = bh.task
+tsk = creditg.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
@@ -116,7 +116,7 @@ icb.tree = makeTuneWrapper("regr.icb", resampling = inner, par.set = num_ps_tree
 r = resample(icb.tree, tsk, resampling = outer, extract = getTuneResult)
 
 # icb using splines
-
+set.seed(177)
 num_ps_spline = makeParamSet(
   makeNumericParam("nu", lower = 0.001, upper = 0.2),
   makeNumericParam("epsilon", lower = 0.0005, upper = 0.1),

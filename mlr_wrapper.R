@@ -751,7 +751,7 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees,transition_trees_max)
   return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk()[-1],mb_tree$risk()[-1],mb_tree_max$risk()[-1]) / dim(data)[1]
   return_list[["Prediction_Models"]] <- Prediction_Models
-  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula, bl2, levels)
+  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, target_class, bl2, df_spline, levels)
   return_list[["Data"]] <- X
   return_list[["FeatureNames"]] <- f_names
   return_list[["Feature_Counter"]] <- feature_counter
@@ -849,7 +849,7 @@ predictLearner.classif.icb = function (.learner, .model, .newdata, ...)
   
   prediction_tree_max <- prediction_tree + pred_iteration
   
-  levels <- c(icb_object$Input_Parameters[6],icb_object$Input_Parameters[7])
+  levels <- c(icb_object$Input_Parameters[7],icb_object$Input_Parameters[8])
   
   prediction_label <- numeric(length(prediction_tree_max))
   
