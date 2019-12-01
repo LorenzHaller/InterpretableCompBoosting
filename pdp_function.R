@@ -6,8 +6,8 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
   data = icb_object$Data
   feature_names = icb_object$FeatureNames
   
-  method <- icb_object$Input_Parameters[[7]]
-  df_spline <- icb_object$Input_Parameters[[8]]
+  method <- icb_object$Input_Parameters[[6]]
+  df_spline <- icb_object$Input_Parameters[[7]]
   
   which = as.integer(seq(1,dim(data)[2],by=1))
   

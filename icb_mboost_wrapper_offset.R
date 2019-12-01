@@ -486,7 +486,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees,transition_trees_max)
   return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk()[-1],mb_tree$risk()[-1],mb_tree_max$risk()[-1]) / dim(data)[1]
   return_list[["Prediction_Models"]] <- Prediction_Models
-  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, levels, bl2, df_spline)
+  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, bl2, df_spline, levels)
   return_list[["Data"]] <- data[,!colnames(data) %in% target]
   return_list[["FeatureNames"]] <- f_names
   return_list[["CATFeatures"]] <- len_boolean

@@ -71,7 +71,7 @@ pollen.task = makeClassifTask(data = pollen, target = "binaryClass")
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = Jap.task
+tsk = pollen.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
