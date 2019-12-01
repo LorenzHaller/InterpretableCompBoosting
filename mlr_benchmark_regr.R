@@ -10,7 +10,7 @@ library(mlrHyperopt)
 library(caret)
 library(mboost)
 library(partykit)
-
+source("xgboost_Christoph.R")
 
 
 ###### Find a list of tasks for the benchmark #############################
@@ -188,11 +188,12 @@ r.rpart = resample(rpart, tsk, resampling = outer, extract = getTuneResult)
 
 
 # Tuning for xgboost
+set.seed(177)
 params.xgboost = makeParamSet(
   makeIntegerParam ("max_depth" , lower = 1, upper = 10),
   makeIntegerParam("nrounds", lower = 1, upper = 1000)
 )
-xgb = makeTuneWrapper("regr.xgboost", resampling = inner, par.set = params.xgboost,
+xgb = makeTuneWrapper("regr.xgboost.mod", resampling = inner, par.set = params.xgboost,
                       control = ctrl, show.info = FALSE)
 r.xgb = resample(xgb, tsk, resampling = outer, extract = getTuneResult)
 

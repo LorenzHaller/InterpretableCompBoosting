@@ -63,6 +63,11 @@ trainLearner.regr.icb = function (.learner, .task, .subset, .weights = NULL, ...
   # Create the feature matrix
   X <- model.matrix(formula, data)
   
+  # Create a vector that contains the number of unique values for every feature
+  len_vector <- as.vector(sapply(sapply(data, unique), length))
+  len_boolean <- len_vector < 3
+  len_boolean <- len_boolean[!colnames(data) %in% target]
+  
   
   y <- data[, target]
   y_int <- y
@@ -470,6 +475,11 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   
   # Create the feature matrix
   X <- model.matrix(formula, data)
+  
+  # Create a vector that contains the number of unique values for every feature
+  len_vector <- as.vector(sapply(sapply(data, unique), length))
+  len_boolean <- len_vector < 3
+  len_boolean <- len_boolean[!colnames(data) %in% target]
   
   # Create a counter for how many features are in the model
   feature_counter <- numeric()
