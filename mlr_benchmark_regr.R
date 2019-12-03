@@ -102,7 +102,7 @@ outer = makeResampleDesc("CV", iters = 5L)
 ####### Hypertuning for icb method 
 
 # icb using tree stumps
-set.seed(177)
+
 num_ps_tree = makeParamSet(
   makeNumericParam("nu", lower = 0.001, upper = 0.2),
   makeNumericParam("epsilon", lower = 0.0005, upper = 0.1),
@@ -112,7 +112,7 @@ num_ps_tree = makeParamSet(
 
 icb.tree = makeTuneWrapper("regr.icb", resampling = inner, par.set = num_ps_tree,
                            control = ctrl)
-
+set.seed(177)
 r = resample(icb.tree, tsk, resampling = outer, extract = getTuneResult)
 
 # icb using splines
@@ -127,12 +127,12 @@ num_ps_spline = makeParamSet(
 
 icb.spline = makeTuneWrapper("regr.icb", resampling = inner, par.set = num_ps_spline,
                            control = ctrl)
-
+set.seed(177)
 r.icb.spline = resample(icb.spline, tsk, resampling = outer, extract = getTuneResult)
 
 
 # ksvm
-set.seed(177)
+
 ps_ksvm = makeParamSet(
   makeNumericParam("C", lower = -15, upper = 15, trafo = function(x) 2^x),
   makeNumericParam("sigma", lower = -15, upper = 15, trafo = function(x) 2^x)
@@ -140,7 +140,7 @@ ps_ksvm = makeParamSet(
 
 ksvm = makeTuneWrapper("regr.ksvm", resampling = inner, par.set = ps_ksvm,
                       control = ctrl, show.info = FALSE)
-
+set.seed(177)
 r.ksvm = resample(ksvm, tsk, resampling = outer, extract = getTuneResult)
 
 
@@ -152,20 +152,24 @@ params.rf <- makeParamSet(makeIntegerParam("mtry",lower = 2,upper = 5),
                         makeIntegerParam("ntree", lower = 100, upper = 1000))
 rf = makeTuneWrapper("regr.randomForest", resampling = inner, par.set = params.rf,
                      control = ctrl, show.info = FALSE)
+set.seed(177)
 r.rf = resample(rf, tsk, resampling = outer, extract = getTuneResult)
 
 
 # linear model
 lm = makeLearner("regr.lm")
+set.seed(177)
 r.lm = resample(lm, tsk, resampling = outer)
 
 
 # gamboost
 params.gamboost <- makeParamSet(makeIntegerParam("mstop", lower = 50, upper = 1000),
                                 makeNumericParam("nu", lower = 0.01, upper = 0.2)
+                                ,makeDiscreteParam("baselearner",values="btree")
                                 )
 gamb = makeTuneWrapper("regr.gamboost", resampling = inner, par.set = params.gamboost,
                      control = ctrl, show.info = FALSE)
+set.seed(177)
 r.gamb = resample(gamb, tsk, resampling = outer, extract = getTuneResult)
 
 
@@ -174,6 +178,7 @@ params.glmboost <- makeParamSet(makeIntegerParam("mstop", lower = 50, upper = 10
                                 makeNumericParam("nu", lower = 0.01, upper = 0.2))
 glmb = makeTuneWrapper("regr.glmboost", resampling = inner, par.set = params.glmboost,
                        control = ctrl, show.info = FALSE)
+set.seed(177)
 r.glmb = resample(glmb, tsk, resampling = outer, extract = getTuneResult)
 
 
@@ -184,17 +189,19 @@ params.rpart = makeParamSet(
   )
 rpart = makeTuneWrapper("regr.rpart", resampling = inner, par.set = params.rpart,
                        control = ctrl, show.info = FALSE)
+set.seed(177)
 r.rpart = resample(rpart, tsk, resampling = outer, extract = getTuneResult)
 
 
 # Tuning for xgboost
-set.seed(177)
+
 params.xgboost = makeParamSet(
   makeIntegerParam ("max_depth" , lower = 1, upper = 10),
   makeIntegerParam("nrounds", lower = 1, upper = 1000)
 )
 xgb = makeTuneWrapper("regr.xgboost.mod", resampling = inner, par.set = params.xgboost,
                       control = ctrl, show.info = FALSE)
+set.seed(177)
 r.xgb = resample(xgb, tsk, resampling = outer, extract = getTuneResult)
 
 

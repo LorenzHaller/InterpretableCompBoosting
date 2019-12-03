@@ -1,5 +1,5 @@
 interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class="Gaussian",
-                                     epsilon = 0.005, bl2=c("bbs","btree"), df_spline = 4,
+                                     epsilon = 0.001, bl2=c("bbs","btree"), df_spline = 4,
                                      max_depth = 8,
                                      min_split = 20, min_bucket = round(min_split/3)){
   # data:     a data frame containing target and features
@@ -51,15 +51,15 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   }
   
   # Create a vector that contains the number of unique values for every feature
-  len_vector <- as.vector(sapply(sapply(data, unique), length))
+  len_vector <- as.vector(sapply(sapply(data[,colnames(data) != target], unique), length))
   len_boolean <- len_vector < 3
-  len_boolean <- len_boolean[!colnames(data) %in% target]
+  #len_boolean <- len_boolean[!colnames(data) %in% target]
   
   # Create mlr task to get full formula
   formula <- as.formula(paste(target,"~ ."))
   
   # Save feature names of one-hot-encoded data
-  f_names <- colnames(data)[- which(colnames(data) == target)]
+  f_names <- colnames(data)[which(colnames(data) != target)]
   
   # Create the feature matrix
   X <- model.matrix(formula, data)

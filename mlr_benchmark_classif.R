@@ -7,19 +7,8 @@ library(partykit)
 library(mboost)
 source("mlr_wrapper.R")
 set.seed(177)
+source("xgboost_classif.R")
 
-# Multiple learners to be compared
-# lrns.classif = list(makeLearner("classif.icb",par.vals = list(nu=0.1, epsilon = 0.005, bl2="btree", max_depth = 4)),
-#             makeLearner("classif.binomial"),
-#             #makeLearner("classif.gamboost"),
-#             makeLearner("classif.glmboost"),
-#             makeLearner("classif.rpart"),
-#             makeLearner("classif.gbm"),
-#             makeLearner("classif.ada"), 
-#             makeLearner("classif.kknn"),
-#             makeLearner("classif.svm"),
-#             makeLearner("classif.randomForest")
-# )
 
 
 # Choose the resampling strategy
@@ -71,17 +60,18 @@ pollen.task = makeClassifTask(data = pollen, target = "binaryClass")
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = pollen.task
+tsk = churn.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
 inner = makeResampleDesc("CV", iters = 2L)
 outer = makeResampleDesc("CV", iters = 5L)
 
+
+
 ####### Hypertuning for icb method 
 
 # icb using tree stumps
-set.seed(177)
 num_ps_tree = makeParamSet(
   makeNumericParam("nu", lower = 0.001, upper = 0.2),
   makeNumericParam("epsilon", lower = 0.001, upper = 0.1),
@@ -91,7 +81,7 @@ num_ps_tree = makeParamSet(
 
 icb.tree = makeTuneWrapper("classif.icb", resampling = inner, par.set = num_ps_tree,
                            control = ctrl)
-
+set.seed(177)
 r = resample(icb.tree, tsk, resampling = outer, extract = getTuneResult)
 
 # icb using splines
@@ -106,12 +96,12 @@ num_ps_spline = makeParamSet(
 
 icb.spline = makeTuneWrapper("classif.icb", resampling = inner, par.set = num_ps_spline,
                              control = ctrl)
-
+set.seed(177)
 r.icb.spline = resample(icb.spline, tsk, resampling = outer, extract = getTuneResult)
 
 
 # ksvm
-set.seed(177)
+
 ps_ksvm = makeParamSet(
   makeNumericParam("C", lower = -15, upper = 15, trafo = function(x) 2^x),
   makeNumericParam("sigma", lower = -15, upper = 15, trafo = function(x) 2^x)
@@ -119,7 +109,7 @@ ps_ksvm = makeParamSet(
 
 ksvm = makeTuneWrapper("classif.ksvm", resampling = inner, par.set = ps_ksvm,
                        control = ctrl, show.info = FALSE)
-
+set.seed(177)
 r.ksvm = resample(ksvm, tsk, resampling = outer, extract = getTuneResult)
 
 
@@ -131,6 +121,7 @@ params.rf <- makeParamSet(makeIntegerParam("mtry",lower = 2,upper = 5),
                           makeIntegerParam("ntree", lower = 100, upper = 1000))
 rf = makeTuneWrapper("classif.randomForest", resampling = inner, par.set = params.rf,
                      control = ctrl, show.info = FALSE)
+set.seed(177)
 r.rf = resample(rf, tsk, resampling = outer, extract = getTuneResult)
 
 
@@ -145,6 +136,7 @@ params.gamboost <- makeParamSet(makeIntegerParam("mstop", lower = 50, upper = 10
 )
 gamb = makeTuneWrapper("classif.gamboost", resampling = inner, par.set = params.gamboost,
                        control = ctrl, show.info = FALSE)
+set.seed(177)
 r.gamb = resample(gamb, tsk, resampling = outer, extract = getTuneResult)
 
 
@@ -153,6 +145,7 @@ params.glmboost <- makeParamSet(makeIntegerParam("mstop", lower = 50, upper = 10
                                 makeNumericParam("nu", lower = 0.01, upper = 0.2))
 glmb = makeTuneWrapper("classif.glmboost", resampling = inner, par.set = params.glmboost,
                        control = ctrl, show.info = FALSE)
+set.seed(177)
 r.glmb = resample(glmb, tsk, resampling = outer, extract = getTuneResult)
 
 
@@ -163,6 +156,7 @@ params.rpart = makeParamSet(
 )
 rpart = makeTuneWrapper("classif.rpart", resampling = inner, par.set = params.rpart,
                         control = ctrl, show.info = FALSE)
+set.seed(177)
 r.rpart = resample(rpart, tsk, resampling = outer, extract = getTuneResult)
 
 
@@ -171,8 +165,20 @@ params.xgboost = makeParamSet(
   makeIntegerParam ("max_depth" , lower = 1, upper = 10),
   makeIntegerParam("nrounds", lower = 1, upper = 1000)
 )
-xgb = makeTuneWrapper("classif.xgboost", resampling = inner, par.set = params.xgboost,
+xgb = makeTuneWrapper("classif.xgboost.mod", resampling = inner, par.set = params.xgboost,
                       control = ctrl, show.info = FALSE)
+set.seed(177)
 r.xgb = resample(xgb, tsk, resampling = outer, extract = getTuneResult)
+
+
+# Tuning for gbm (for classification with factors)
+params.gbm = makeParamSet(
+  makeIntegerParam ("interaction.depth" , lower = 1, upper = 10),
+  makeIntegerParam("n.trees", lower = 50, upper = 1000)
+)
+gbm = makeTuneWrapper("classif.gbm", resampling = inner, par.set = params.gbm,
+                      control = ctrl, show.info = FALSE)
+set.seed(177)
+r.gbm = resample(gbm, tsk, resampling = outer, extract = getTuneResult)
 
 
