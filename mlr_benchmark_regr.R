@@ -92,7 +92,7 @@ base.learners.regr = list(
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = creditg.task
+tsk = puma.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
