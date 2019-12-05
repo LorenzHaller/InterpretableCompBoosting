@@ -170,11 +170,9 @@ data_risk_table <- function(icb_list, train = TRUE, data_names = NULL){
   # icb_list: a list of trained icb objects (train = TRUE) or prediction objects (train = FALSE)
   # for every data set in the list add a line in the table
   
-  col_names <- c("%-Risk Expl. in stage 1 (Linear)","%-Risk Expl. in stage 2 (Non-linear)",
-                 "%-Risk Expl. in stage 3 (Trees of depth 2)","%-Risk Expl. in stage 4 (Deeper Trees)",
-                 "Overall %-Risk Expl.")
   
-  table <- matrix("", nrow = length(icb_list), ncol = 5)
+  
+  table <- matrix("", nrow = length(icb_list), ncol = 6)
   
   if(is.null(data_names)){
     data_names <- as.character(1:length(icb_list))
@@ -183,6 +181,10 @@ data_risk_table <- function(icb_list, train = TRUE, data_names = NULL){
   
   
   if(isTRUE(train)){
+    
+    col_names <- c("Training Data %-Risk Explanation","Stage 1 (Linear)","Stage 2 (Non-linear)",
+                   "Stage 3 (Trees of depth 2)","Stage 4 (Deeper Trees)",
+                   "Overall %-Risk Explanation")
     
     for(i in 1:length(icb_list)){
       
@@ -199,19 +201,28 @@ data_risk_table <- function(icb_list, train = TRUE, data_names = NULL){
       
       perc_final <- paste(round((1 - (risk_stage4/initial_risk)) * 100, digits=2),"%")
       
-      table[i,] <- c(perc_stage1,perc_stage2,perc_stage3,perc_stage4, perc_final)
+      table[i,] <- c(data_names[i],perc_stage1,perc_stage2,perc_stage3,perc_stage4, perc_final)
       
     }
     
     
     df <- as.data.frame(table)
     colnames(df) <- col_names
-    rownames(df) <- data_names
-    formattable(df)
+    #rownames(df) <- data_names
+    customGreen = "#71CA97"
+    customGreen0 = "#DeF7E9"
+    formattable(df, align =c("l","c","c","c","c","r"),
+                    list( `Training Data %-Risk Explanation` = formatter("span", 
+                                                       style = ~ style(color = "grey",font.weight = "bold")),
+                      `Overall %-Risk Explanation`= color_tile(customGreen0, customGreen)))
     
   }
   
   else if(isFALSE(train)){
+    
+    col_names <- c("Test Data %-Risk Explanation","Stage 1 (Linear)","Stage 2 (Non-linear)",
+                   "Stage 3 (Trees of depth 2)","Stage 4 (Deeper Trees)",
+                   "Overall %-Risk Explanation")
     
     for(i in 1:length(icb_list)){
       
@@ -228,15 +239,19 @@ data_risk_table <- function(icb_list, train = TRUE, data_names = NULL){
       
       perc_final <- paste(round((1 - (risk_stage4/initial_risk)) * 100, digits=2),"%")
       
-      table[i,] <- c(perc_stage1,perc_stage2,perc_stage3,perc_stage4, perc_final)
+      table[i,] <- c(data_names[i],perc_stage1,perc_stage2,perc_stage3,perc_stage4, perc_final)
       
     }
   
     df <- as.data.frame(table)
     colnames(df) <- col_names
-    rownames(df) <- data_names
+    #rownames(df) <- data_names
     customGreen = "#71CA97"
-    formattable(df, list(`Overall %-Risk Expl.`= color_bar(customGreen)))
+    customGreen0 = "#DeF7E9"
+    formattable(df, align =c("l","c","c","c","c","r"),
+                list( `Test Data %-Risk Explanation` = formatter("span", 
+                                                       style = ~ style(color = "grey",font.weight = "bold")),
+                      `Overall %-Risk Explanation`= color_tile(customGreen0, customGreen)))
   
   }
   

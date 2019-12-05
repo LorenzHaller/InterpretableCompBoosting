@@ -72,12 +72,12 @@ source("family.R")
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper_offset.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
-                                            target_class = "Binomial", bl2 = "bbs",
+                                            target_class = "Gaussian", bl2 = "bbs",
                                             epsilon = 0.005, max_depth = 4)
 
 # Make predictions
 source("icb_predict_wrapper_offset.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Class")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="medv")
 
 # Show results in table
 source("helper_functions.R")
@@ -87,10 +87,11 @@ stage_risk(pred_object = pred)
 # Show results for multiple data sets
 source("helper_functions.R")
 train_list = list()
-train_list[[1]] = test_bh
-train_list[[2]] = test_air
+train_list[[1]] = test_Air
+train_list[[2]] = test_bh
+train_list[[3]] = test_bike
 data_risk_table(icb_list = train_list, train = F, 
-                data_names = c("Boston Housing", "Airquality"))
+                data_names = c("Airquality","Boston Housing","Bike"))
 
 # Show individual results for all observations in predict data
 source("helper_functions.R")
