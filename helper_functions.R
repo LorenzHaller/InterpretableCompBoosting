@@ -282,3 +282,68 @@ individual_stage_risk <- function(pred_object, subset = NULL){
   formattable(ind_df)
   
 }
+
+
+individual_barplot <- function(pred_object, subset = NULL){
+  
+  if(is.null(subset)){
+    ind_matrix <- pred_object$IndividualRisk
+    ind_table <- ind_matrix[,2:5]
+    row_names <- paste("Obs.", as.character(1:dim(ind_table)[1]))
+  } else{
+    subset <- sort(subset)
+    ind_matrix <- pred_object$IndividualRisk[subset,]
+    ind_table <- ind_matrix[,2:5]
+    row_names <- paste("Obs.", subset)
+  }
+  
+  abs_data_frame = data.frame(Observation = character(),
+                                 Stage = character(),
+                                 Loss = numeric())
+  
+  for(o in 1:length(row_names)){
+    abs_matrix_temp = matrix(0, nrow = 4, ncol = 3)
+    abs_matrix_temp[1,] = c(row_names[o], "Linear", ind_matrix[o,1] - ind_matrix[o,2])
+    abs_matrix_temp[2,] = c(row_names[o], "Non Linear", ind_matrix[o,2] - ind_matrix[o,3])
+    abs_matrix_temp[3,] = c(row_names[o], "Trees of depth 2", ind_matrix[o,3] - ind_matrix[o,4])
+    abs_matrix_temp[4,] = c(row_names[o], "Deeper Trees", ind_matrix[o,4] - ind_matrix[o,5])
+    abs_df_temp = as.data.frame(abs_matrix_temp)
+    colnames(abs_df_temp) <- c("Observation","Stage","Loss")
+    abs_data_frame <- rbind(abs_data_frame,abs_df_temp)
+  }
+  
+  abs_data_frame$Loss <- as.numeric(as.character(abs_data_frame$Loss))
+  abs_data_frame$Stage <- factor(abs_data_frame$Stage, 
+                                levels = c('Deeper Trees','Trees of depth 2','Non Linear','Linear'))
+  
+  # # Table for absolute differences in risk between stage and previous stage
+  # abs_table <- ind_table
+  # abs_table[,4] <- ind_matrix[,1] - ind_matrix[,2]
+  # abs_table[,3] <- ind_matrix[,2] - ind_matrix[,3]
+  # abs_table[,2] <- ind_matrix[,3] - ind_matrix[,4]
+  # abs_table[,1] <- ind_matrix[,4] - ind_matrix[,5]
+  # 
+  # abs_data <- as.data.frame(abs_table)
+  # colnames(abs_data) <- c("Lin","Nonlin","Trees","DeepTrees")
+  # abs_data$index <- 1:dim(abs_data)[1]
+  # 
+  # 
+  # rel_table <- ind_table
+  # rel_table[,1] <- paste(round((1 - (ind_matrix[,2] / ind_matrix[,1])) * 100, digits=2),"%")
+  # rel_table[,2] <- paste(round(((ind_matrix[,2]-ind_matrix[,3]) / ind_matrix[,1]) * 100, digits=2),"%")
+  # rel_table[,3] <- paste(round(((ind_matrix[,3]-ind_matrix[,4]) / ind_matrix[,1]) * 100, digits=2),"%")
+  # rel_table[,4] <- paste(round(((ind_matrix[,4]-ind_matrix[,5]) / ind_matrix[,1]) * 100, digits=2),"%")
+  # 
+  
+  barplot(t(abs_table), horiz = TRUE, beside = T, names.arg = row_names,
+          main = "Absolute loss improvement per stage"
+          #,legend.text = c("Deeper trees","Trees of depth 2","Non-linear","Linear")
+          )
+  
+  ggplot(abs_data_frame, aes(x = Observation, y = Loss, fill = Stage))  + 
+    geom_bar(stat='identity',position=position_dodge()) + 
+    # geom_text(aes(y=Loss, label=Loss), vjust=1.6, 
+    #           color="black", size=3.5) +
+    coord_flip()
+  
+}
