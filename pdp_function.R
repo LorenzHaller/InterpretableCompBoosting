@@ -138,7 +138,7 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
       if(!is.null(pr)){
         if(!(pr[1] == 0)){
           plot(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b",
-               ylab="Feature effect on the predicted ozone",xlab=colnames(data_temp)[1], ylim = ylim)
+               ylab="Feature effect on the predicted outcome",xlab=colnames(data_temp)[1], ylim = ylim)
         }
       }
       if(!is.null(linear_coefficients[[1]])){
