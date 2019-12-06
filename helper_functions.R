@@ -335,12 +335,13 @@ individual_barplot <- function(pred_object, subset = NULL){
   # rel_table[,4] <- paste(round(((ind_matrix[,4]-ind_matrix[,5]) / ind_matrix[,1]) * 100, digits=2),"%")
   # 
   
-  barplot(t(abs_table), horiz = TRUE, beside = T, names.arg = row_names,
-          main = "Absolute loss improvement per stage"
-          #,legend.text = c("Deeper trees","Trees of depth 2","Non-linear","Linear")
-          )
+  # barplot(t(abs_table), horiz = TRUE, beside = T, names.arg = row_names,
+  #         main = "Absolute loss improvement per stage"
+  #         #,legend.text = c("Deeper trees","Trees of depth 2","Non-linear","Linear")
+  #         )
   
   ggplot(abs_data_frame, aes(x = Observation, y = Loss, fill = Stage))  + 
+    ggtitle("Absolute loss improvement per stage") + 
     geom_bar(stat='identity',position=position_dodge()) + 
     # geom_text(aes(y=Loss, label=Loss), vjust=1.6, 
     #           color="black", size=3.5) +
