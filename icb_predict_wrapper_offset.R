@@ -53,6 +53,10 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   individual_risk <- matrix(0, ncol = 5, nrow = dim(X_new)[1])
   colnames(individual_risk) <- c("Intercept","Linear","Non-linear",
                                  "Trees of depth 2", "Deeper Trees")
+  # Create matrix to save predictions after every stage
+  stage_predictions <- matrix(0, ncol = 5, nrow = dim(X_new)[1])
+  colnames(stage_predictions) <- c("Intercept","Linear","Non-linear",
+                                 "Trees of depth 2", "Deeper Trees")
   
   # Create an empty vector with the length of newdata
   prediction <- vector(mode = "numeric", length = dim(X_new)[1])
@@ -73,6 +77,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     }
     for (j in 1:dim(X_new)[1]){
       individual_risk[j,1] = round(icb_object$Riskfunction(y = y_int[j], f = prediction[j]), digits = 2)
+      stage_predictions[j,1] = prediction[j]
     }
   }
   
@@ -108,6 +113,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   if(!is.null(target)){
     for (j in 1:dim(X_new)[1]){
       individual_risk[j,2] = round(icb_object$Riskfunction(y = y_int[j], f = prediction_linear[j]), digits = 2)
+      stage_predictions[j,2] = prediction_linear[j]
     }
   }
   
@@ -140,6 +146,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   if(!is.null(target)){
     for (j in 1:dim(X_new)[1]){
       individual_risk[j,3] = round(icb_object$Riskfunction(y = y_int[j], f = prediction_spline[j]), digits = 2)
+      stage_predictions[j,3] = prediction_spline[j]
     }
   }
   
@@ -168,6 +175,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   if(!is.null(target)){
     for (j in 1:dim(X_new)[1]){
       individual_risk[j,4] = round(icb_object$Riskfunction(y = y_int[j], f = prediction_tree[j]), digits = 2)
+      stage_predictions[j,4] = prediction_tree[j]
     }
   }
   
@@ -196,6 +204,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   if(!is.null(target)){
     for (j in 1:dim(X_new)[1]){
       individual_risk[j,5] = round(icb_object$Riskfunction(y = y_int[j], f = prediction_tree_max[j]), digits = 2)
+      stage_predictions[j,5] = prediction_tree_max[j]
     }
   }
   
@@ -229,6 +238,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   return_list[["TestRisk"]] <- test_risk
   return_list[["Transition Iterations"]] <- c(icb_object$`Transition Iterations`,length(icb_object$Risk))
   return_list[["IndividualRisk"]] <- individual_risk
+  return_list[["StagePredictions"]] <- stage_predictions
   
   options(warn = oldw)
   

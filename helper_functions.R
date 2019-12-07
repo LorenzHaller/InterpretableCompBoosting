@@ -284,37 +284,96 @@ individual_stage_risk <- function(pred_object, subset = NULL){
 }
 
 
-individual_barplot <- function(pred_object, subset = NULL){
+individual_barplot <- function(pred_object, subset = NULL, plot.which = c("Loss","Prediction")){
   
   if(is.null(subset)){
-    ind_matrix <- pred_object$IndividualRisk
+    if(plot.which == "Loss"){
+      ind_matrix <- pred_object$IndividualRisk
+    } else if(plot.which == "Prediction"){
+      ind_matrix <- pred_object$StagePredictions
+    }
+    
     ind_table <- ind_matrix[,2:5]
     row_names <- paste("Obs.", as.character(1:dim(ind_table)[1]))
+    
   } else{
     subset <- sort(subset)
-    ind_matrix <- pred_object$IndividualRisk[subset,]
+    if(plot.which == "Loss"){
+      ind_matrix <- pred_object$IndividualRisk[subset,]
+    } else if(plot.which == "Prediction"){
+      ind_matrix <- pred_object$StagePredictions[subset,]
+    }
     ind_table <- ind_matrix[,2:5]
     row_names <- paste("Obs.", subset)
   }
   
-  abs_data_frame = data.frame(Observation = character(),
-                                 Stage = character(),
-                                 Loss = numeric())
   
-  for(o in 1:length(row_names)){
-    abs_matrix_temp = matrix(0, nrow = 4, ncol = 3)
-    abs_matrix_temp[1,] = c(row_names[o], "Linear", ind_matrix[o,1] - ind_matrix[o,2])
-    abs_matrix_temp[2,] = c(row_names[o], "Non Linear", ind_matrix[o,2] - ind_matrix[o,3])
-    abs_matrix_temp[3,] = c(row_names[o], "Trees of depth 2", ind_matrix[o,3] - ind_matrix[o,4])
-    abs_matrix_temp[4,] = c(row_names[o], "Deeper Trees", ind_matrix[o,4] - ind_matrix[o,5])
-    abs_df_temp = as.data.frame(abs_matrix_temp)
-    colnames(abs_df_temp) <- c("Observation","Stage","Loss")
-    abs_data_frame <- rbind(abs_data_frame,abs_df_temp)
+  if(plot.which == "Loss"){
+    
+    abs_data_frame = data.frame(Observation = character(),
+                                Stage = character(),
+                                Loss = numeric())
+    
+    for(o in 1:length(row_names)){
+      abs_matrix_temp = matrix(0, nrow = 4, ncol = 3)
+      abs_matrix_temp[1,] = c(row_names[o], "Linear", ind_matrix[o,1] - ind_matrix[o,2])
+      abs_matrix_temp[2,] = c(row_names[o], "Non Linear", ind_matrix[o,2] - ind_matrix[o,3])
+      abs_matrix_temp[3,] = c(row_names[o], "Trees of depth 2", ind_matrix[o,3] - ind_matrix[o,4])
+      abs_matrix_temp[4,] = c(row_names[o], "Deeper Trees", ind_matrix[o,4] - ind_matrix[o,5])
+      abs_df_temp = as.data.frame(abs_matrix_temp)
+      colnames(abs_df_temp) <- c("Observation","Stage","Loss")
+      
+      abs_data_frame <- rbind(abs_data_frame,abs_df_temp)
+    }
+    
+    abs_data_frame$Stage <- factor(abs_data_frame$Stage, 
+                                   levels = c('Deeper Trees','Trees of depth 2','Non Linear','Linear'))
+    
+    abs_data_frame$Loss <- as.numeric(as.character(abs_data_frame$Loss))
+    
+    ggplot(abs_data_frame, aes(x = Observation, y = Loss, fill = Stage))  + 
+      ggtitle("Absolute loss improvement per stage") + 
+      geom_bar(stat='identity',position=position_dodge()) + 
+      # geom_text(aes(y=Loss, label=Loss), vjust=1.6, 
+      #           color="black", size=3.5) +
+      coord_flip()
+    
+    
+  } else if(plot.which == "Prediction"){
+    
+    abs_data_frame = data.frame(Observation = character(),
+                                Stage = character(),
+                                Prediction = numeric())
+    
+    for(o in 1:length(row_names)){
+      abs_matrix_temp = matrix(0, nrow = 4, ncol = 3)
+      abs_matrix_temp[1,] = c(row_names[o], "Linear", ind_matrix[o,2])
+      abs_matrix_temp[2,] = c(row_names[o], "Non Linear", ind_matrix[o,3])
+      abs_matrix_temp[3,] = c(row_names[o], "Trees of depth 2", ind_matrix[o,4])
+      abs_matrix_temp[4,] = c(row_names[o], "Deeper Trees", ind_matrix[o,5])
+      abs_df_temp = as.data.frame(abs_matrix_temp)
+      colnames(abs_df_temp) <- c("Observation","Stage","Prediction")
+      
+      abs_data_frame <- rbind(abs_data_frame,abs_df_temp)
+    }
+    
+    abs_data_frame$Stage <- factor(abs_data_frame$Stage, 
+                                   levels = c('Deeper Trees','Trees of depth 2','Non Linear','Linear'))
+    
+    abs_data_frame$Prediction <- as.numeric(as.character(abs_data_frame$Prediction))
+    
+    ggplot(abs_data_frame, aes(x = Observation, y = Prediction, fill = Stage))  + 
+      ggtitle("Prediction per stage") + 
+      geom_hline(yintercept = as.numeric(ind_matrix[[1,1]])) +
+      geom_bar(stat='identity',position=position_dodge()) + 
+      # geom_text(aes(y=Loss, label=Loss), vjust=1.6, 
+      #           color="black", size=3.5) +
+      coord_flip()
   }
   
-  abs_data_frame$Loss <- as.numeric(as.character(abs_data_frame$Loss))
-  abs_data_frame$Stage <- factor(abs_data_frame$Stage, 
-                                levels = c('Deeper Trees','Trees of depth 2','Non Linear','Linear'))
+  
+  
+  
   
   # # Table for absolute differences in risk between stage and previous stage
   # abs_table <- ind_table
@@ -340,11 +399,6 @@ individual_barplot <- function(pred_object, subset = NULL){
   #         #,legend.text = c("Deeper trees","Trees of depth 2","Non-linear","Linear")
   #         )
   
-  ggplot(abs_data_frame, aes(x = Observation, y = Loss, fill = Stage))  + 
-    ggtitle("Absolute loss improvement per stage") + 
-    geom_bar(stat='identity',position=position_dodge()) + 
-    # geom_text(aes(y=Loss, label=Loss), vjust=1.6, 
-    #           color="black", size=3.5) +
-    coord_flip()
+  
   
 }

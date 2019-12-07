@@ -98,7 +98,7 @@ data_risk_table(icb_list = train_list, train = F,
 # Show individual results for all observations in predict data
 source("helper_functions.R")
 individual_stage_risk(pred, subset = c(1,7,34))
-individual_barplot(pred, subset = c(1,7,5,19,34))
+individual_barplot(pred, subset = c(1,70,55,109,183), plot.which = "Prediction")
 
 # Visualize feature effects
 source("pdp_function.R")
