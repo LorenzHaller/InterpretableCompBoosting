@@ -290,9 +290,20 @@ individual_stage_risk <- function(pred_object, subset = NULL){
   ind_table[,3] <- paste(round(((ind_matrix[,3]-ind_matrix[,4]) / ind_matrix[,1]) * 100, digits=2),"%")
   ind_table[,4] <- paste(round(((ind_matrix[,4]-ind_matrix[,5]) / ind_matrix[,1]) * 100, digits=2),"%")
   
+  ind_table <- cbind(row_names,ind_table,paste(round((1 - (ind_matrix[,5]/ind_matrix[,1])) * 100, digits=2),"%"))
+  
   ind_df <- as.data.frame(ind_table)
-  rownames(ind_df) <- row_names
-  formattable(ind_df)
+  #rownames(ind_df) <- row_names
+  colnames(ind_df) <- c("Individual %-Loss Explanation","Stage 1 (Linear)","Stage 2 (Non-linear)",
+                        "Stage 3 (Trees of depth 2)","Stage 4 (Deeper Trees)",
+                        "Overall %-Loss Explanation")
+  
+  customGreen = "#71CA97"
+  customGreen0 = "#DeF7E9"
+  formattable(ind_df, align =c("l","c","c","c","c","r"),
+              list( `Individual %-Loss Explanation` = formatter("span", 
+                                                               style = ~ style(color = "grey",font.weight = "bold")),
+                    `Overall %-Loss Explanation`= color_tile(customGreen0, customGreen)))
   
 }
 
@@ -308,7 +319,6 @@ individual_barplot <- function(pred_object, subset = NULL, plot.which = c("Loss"
     
     ind_table <- ind_matrix[,2:5]
     row_names <- paste("Obs.", as.character(1:dim(ind_table)[1]))
-    
   } else{
     subset <- sort(subset)
     if(plot.which == "Loss"){
@@ -372,15 +382,17 @@ individual_barplot <- function(pred_object, subset = NULL, plot.which = c("Loss"
     
     abs_data_frame$Stage <- factor(abs_data_frame$Stage, 
                                    levels = c('Deeper Trees','Trees of depth 2','Non Linear','Linear'))
+    abs_data_frame$Observation <- factor(abs_data_frame$Observation, 
+                                   levels = levels(abs_data_frame$Observation))
     
     abs_data_frame$Prediction <- as.numeric(as.character(abs_data_frame$Prediction))
     
     ggplot(abs_data_frame, aes(x = Observation, y = Prediction, fill = Stage))  + 
       ggtitle("Prediction per stage") + 
-      geom_hline(yintercept = as.numeric(ind_matrix[[1,1]])) +
-      annotate(geom="text", y=as.numeric(ind_matrix[[1,1]]), x=row_names[1], label="Intercept",
-               color="black") +
+      geom_hline(yintercept = as.numeric(ind_matrix[[1,1]]), linetype = "dotted", size = 0.75) +
       geom_bar(stat='identity',position=position_dodge()) + 
+      annotate(geom="text", y=as.numeric(ind_matrix[[1,1]]), x=row_names[1], label="Intercept",
+               color="black", size = 4, family = "sans") +
       # geom_text(aes(y=Loss, label=Loss), vjust=1.6, 
       #           color="black", size=3.5) +
       coord_flip()
