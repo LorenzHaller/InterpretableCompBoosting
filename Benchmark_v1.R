@@ -79,7 +79,7 @@ micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1,
 # Make predictions
 source("icb_predict_wrapper_offset.R")
 #source("Icb_predict_factors.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="count")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
 
 # Show results in table
 source("helper_functions.R")
@@ -97,8 +97,8 @@ data_risk_table(icb_list = train_list, train = F,
 
 # Show individual results for all observations in predict data
 source("helper_functions.R")
-individual_stage_risk(pred, subset = c(1,7,34))
-individual_barplot(pred, subset = c(1,70,55,109,183), plot.which = "Prediction")
+individual_stage_risk(pred, subset = c(1,7,27,33))
+individual_barplot(pred, subset = c(1,7,27,33), plot.which = "Prediction")
 
 # Visualize feature effects
 source("pdp_function.R")
@@ -106,7 +106,7 @@ pdp_function(icb_object = micb_wrapper)
 
 # Plot number of features over time
 source("helper_functions.R")
-plot.icb(micb_object = train_air, predict_object = test_air, fcount = T,
+plot.icb(micb_object = micb_wrapper, predict_object = pred, fcount = T,
          data_name = "Airquality")
   
   

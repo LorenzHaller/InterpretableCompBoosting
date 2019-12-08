@@ -138,17 +138,21 @@ plot.icb = function(micb_object = NULL, predict_object = NULL, fcount = FALSE,
        ylim=c(0,max(micb_object$Risk)),xlim=c(0,micb_object$Input_Parameters[[2]]),
        main=title, lwd = 2)
   
+  # qplot(x=1:length(micb_object$Risk), y=micb_object$Risk, geom="line",
+  #       xlab="Iteration",ylab="Mean Squared Error",colour=col1, 
+  #       ylim=c(0,max(micb_object$Risk)),xlim=c(0,micb_object$Input_Parameters[[2]]),
+  #       main=title)
+  
   # Add vertical lines where the stages change
   abline(v = micb_object$`Transition Iterations`[1]+1, lty = 2, col = "darkgray")
   abline(v = micb_object$`Transition Iterations`[2]+1, lty = 2, col = "darkgray")
   abline(v = micb_object$`Transition Iterations`[3]+1, lty = 2, col = "darkgray")
+
   
   # Add line for predictions if available
   if(!is.null(predict_object)){
     points(1:length(predict_object$TestRisk),predict_object$TestRisk,
            type="l",col="blue",lwd=2)
-    legend("top", c("Train", "Test", "Stage Transitions"),
-           col = c("red", "blue", "darkgray"), lty = c(1, 2),cex=0.7)
   }
   
   # Add visualisation for the number of features used by the model
@@ -160,6 +164,15 @@ plot.icb = function(micb_object = NULL, predict_object = NULL, fcount = FALSE,
     axis(side = 4)
     mtext("Number of features", side = 4, line = 3)
     
+  }
+  
+  # Add line for predictions if available
+  if(!is.null(predict_object)){
+    legend("topright", c("Train", "Test", "Stage Transitions"),
+           col = c("red", "blue", "darkgray"), lty = c(1, 2),cex=0.7)
+  } else{
+    legend("topright", c("Train", "Stage Transitions"),
+           col = c("red", "darkgray"), lty = c(1, 2),cex=0.7)
   }
   
 }
@@ -365,6 +378,8 @@ individual_barplot <- function(pred_object, subset = NULL, plot.which = c("Loss"
     ggplot(abs_data_frame, aes(x = Observation, y = Prediction, fill = Stage))  + 
       ggtitle("Prediction per stage") + 
       geom_hline(yintercept = as.numeric(ind_matrix[[1,1]])) +
+      annotate(geom="text", y=as.numeric(ind_matrix[[1,1]]), x=row_names[1], label="Intercept",
+               color="black") +
       geom_bar(stat='identity',position=position_dodge()) + 
       # geom_text(aes(y=Loss, label=Loss), vjust=1.6, 
       #           color="black", size=3.5) +
