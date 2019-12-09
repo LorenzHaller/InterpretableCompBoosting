@@ -79,7 +79,7 @@ micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1,
 # Make predictions
 source("icb_predict_wrapper_offset.R")
 #source("Icb_predict_factors.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="count")
 
 # Show results in table
 source("helper_functions.R")
@@ -98,7 +98,7 @@ data_risk_table(icb_list = train_list, train = F,
 # Show individual results for all observations in predict data
 source("helper_functions.R")
 individual_stage_risk(pred, subset = c(1,7,27,33))
-individual_barplot(pred, subset = c(1,7,27,33), plot.which = "Prediction")
+individual_barplot(pred, subset = c(1,7,27,33), plot.which = "Loss")
 
 # Visualize feature effects
 source("pdp_function.R")
