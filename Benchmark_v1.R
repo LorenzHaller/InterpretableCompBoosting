@@ -71,14 +71,14 @@ source("family.R")
 
 ### OWN METHOD MBOOST WRAPPER
 source("icb_mboost_wrapper_offset.R")
-#source("icb_factors.R")
+source("icb_factors.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
                                             target_class = "Gaussian", bl2 = "bbs",
                                             epsilon = 0.005, max_depth = 4)
 
 # Make predictions
 source("icb_predict_wrapper_offset.R")
-#source("Icb_predict_factors.R")
+source("Icb_predict_factors.R")
 pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="count")
 
 # Show results in table
@@ -122,11 +122,17 @@ nu_bm = 0.05
 
 library(mboost)
 # Mboost with linear terms
-mboost_bols = mboost::gamboost(formula = formula, data = train, baselearner = "bols",
+
+traintest=rbind(train,test)
+X = sparse.model.matrix(as.formula(paste("count ~", paste(colnames(train[,colnames(train)!= "count"]), sep = "", collapse=" +"))), data = traintest)
+
+
+mboost_bols = mboost::gamboost(formula = formula, data = droplevels(traintest[1:nrow(train),]), baselearner = "bols",
                      control = boost_control(nu = nu_bm, mstop = mstop_bm))
-mb_bols_pred = mboost_bols$predict(test)
+mb_bols_pred = mboost_bols$predict(droplevels(traintest[-(1:nrow(train)),]))
+
 # Using mboost with splines
-mboost_bols_bs = mboost::gamboost(formula = formula, data = train, baselearner = "bbs",
+mboost_bols_bs = mboost::gamboost(formula = formula, data = train, baselearner = "bols",
                                   control = boost_control(nu = nu_bm, mstop = mstop_bm))
 mb_spline_pred = mboost_bols_bs$predict(test)
 # Checking mboost with trees

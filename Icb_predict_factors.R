@@ -8,13 +8,38 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   #X <- model.matrix(formula, newdata)
   #X_new <- cbind(1, newdata)
   
+  # Check for NAs and exclude the rows with NAs
+  if(anyNA(newdata)){
+    X_new <- na.omit(newdata)
+    warning("Rows with NAs were excluded.")
+  } else{
+    X_new <- newdata
+  }
+  
+  
+  # If new factor levels occur in X_new, convert them to NAs
+  for (f in 1: dim(X_new)[2]){
+    if(colnames(X_new)[f] != target & is.factor(X_new[,f])){
+      #print(levels(X_new[,f]))
+      f_levels = eval(parse(text = paste0("icb_object$FeatureLevels$",colnames(X_new)[f]) ))
+      X_new[,f] <- factor(X_new[,f], levels = f_levels)
+      #print(levels(X_new[,f]))
+    }
+  }
+  
+  # Exclude the NAs (new factor levels)
+  if(anyNA(X_new)){
+    X_new <- na.omit(X_new)
+    warning("Rows with new factor levels excluded.")
+  } else{
+    X_new <- X_new
+  }
+  
+  
   oldw <- getOption("warn")
   options(warn = -1)
   
-  
-  X_new <- na.omit(newdata)
-  
-  
+
   
   target_class <- icb_object$Input_Parameters[[5]]
   
@@ -36,7 +61,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     }
   }
   
-  X_new <- droplevels(X_new)
+  #X_new <- summary(droplevels(X_new))
   
   # Make one-hot encoding for factor variables
   #dummies <- dummyVars(" ~ .", data = X_new, fullRank = T)
