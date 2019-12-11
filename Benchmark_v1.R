@@ -39,16 +39,6 @@ data = bank
 formula <- Class ~ V1 + V2 + V3 + V4 + V5 + V6 + V7 + V8 + V9 + V10 + V11 + V12 + V13 + V14 + V15 + V16
 
 
-# Add another data set to explore interactions
-# library(jtools)
-# states <- as.data.frame(state.x77)
-# data <- states
-# colnames(data) <- c("Population","Income","Illiteracy","LifeExp",
-#                     "Murder","HSGrad","Frost","Area")
-# 
-# formula <- Income ~ Population + Illiteracy + LifeExp + Murder + HSGrad + Frost + Area
-# formula <- terms.formula(formula)
-
 
 
 # Split the data in training and test data (75/25 split)
@@ -108,8 +98,19 @@ pdp_function(icb_object = micb_wrapper)
 source("helper_functions.R")
 plot.icb(micb_object = micb_wrapper, predict_object = pred, fcount = T,
          data_name = "Airquality")
+
+# Plot Main Effect Complexity
+source("C:/Users/halle/Downloads/Uni/Interpretable Machine Learning/FunComplexity.R")
+library(iml)
+
+mod = micb_wrapper$Prediction_Models$Spline
+
+pred.icb = iml::Predictor$new(mod, train)
+
+grid.size = 50
+fc = FunComplexity$new(pred.icb, epsilon = 0.01,grid.size = grid.size)
   
-  
+plot(fc$approx_models$Wind) 
 
 
 
