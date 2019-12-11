@@ -29,6 +29,8 @@ bike.OML.task = getOMLTask(7393)
 bike = bike.OML.task$input$data.set$data
 exclude_cols = c("datetime")
 data = bike[,!colnames(bike) %in% exclude_cols]
+data = data[data$weather != 4,]
+data$weather <- factor(data[,5], levels = c(1,2,3))
 formula <- count ~ time + season + holiday + workingday + weather + temp + atemp + humidity + windspeed + dayOfWeek
 
 # Classification Data: 
@@ -63,13 +65,13 @@ source("family.R")
 #source("icb_mboost_wrapper_offset.R")
 source("icb_factors.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
-                                            target_class = "Gaussian", bl2 = "bbs",
+                                            target_class = "Binomial", bl2 = "bbs",
                                             epsilon = 0.005, max_depth = 4)
 
 # Make predictions
 #source("icb_predict_wrapper_offset.R")
 source("Icb_predict_factors.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="count")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="binaryClass")
 
 # Show results in table
 source("helper_functions.R")
@@ -107,10 +109,13 @@ mod = micb_wrapper$Prediction_Models$Spline
 
 pred.icb = iml::Predictor$new(mod, train)
 
-grid.size = 50
+grid.size = 100
 fc = FunComplexity$new(pred.icb, epsilon = 0.01,grid.size = grid.size)
+
+fc$approx_models$V12$n_coefs
+fc$approx_models$V4$n_coefs
   
-plot(fc$approx_models$Wind) 
+plot(fc$approx_models$V12) 
 
 
 

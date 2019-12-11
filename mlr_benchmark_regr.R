@@ -3,10 +3,11 @@
 
 library(mlr)
 library(OpenML)
-source("mlr_wrapper.R")
+#source("mlr_wrapper.R")
+source("mlr_wrapper_factor.R")
 set.seed(177)
 #devtools::install_github("jakob-r/mlrHyperopt", dependencies = TRUE)
-library(mlrHyperopt)
+#library(mlrHyperopt)
 library(caret)
 library(mboost)
 library(partykit)
@@ -49,7 +50,7 @@ wages.task = makeRegrTask(data = wages, target = "WAGE")
 
 ## Task 3: credit-g
 creditg.OML.task = getOMLTask(146813)
-creditg = creditg.OML.task$input$data.set$data
+creditg = droplevels(creditg.OML.task$input$data.set$data)
 creditg.task = makeRegrTask(data = creditg, target = "credit_amount")
 
 ## Task 4: kin8nm 
@@ -71,7 +72,7 @@ wine.task = makeRegrTask(data = wine_data, target = "quality")
 
 
 # Create list of all tasks
-tasks = list(bh.task, puma.task, wages.task, creditg.task, kin8nm.task, wine.task)
+#tasks = list(bh.task, puma.task, wages.task, creditg.task, kin8nm.task, wine.task)
 
 
 ########################## Learners #################################################
@@ -92,7 +93,7 @@ base.learners.regr = list(
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = puma.task
+tsk = creditg.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)

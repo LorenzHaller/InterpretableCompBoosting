@@ -6,6 +6,7 @@ library(caret)
 library(partykit)
 library(mboost)
 source("mlr_wrapper.R")
+#source("mlr_wrapper_factor.R")
 set.seed(177)
 source("xgboost_classif.R")
 
@@ -60,7 +61,7 @@ pollen.task = makeClassifTask(data = pollen, target = "binaryClass")
 
 ####### Hyperparametertuning Part ##################################################
 
-tsk = bank.task
+tsk = churn.task
 
 #ctrl = makeTuneControlGrid()
 ctrl = makeTuneControlRandom(maxit = 30L)
