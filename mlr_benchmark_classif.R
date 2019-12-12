@@ -5,8 +5,8 @@ library(OpenML)
 library(caret)
 library(partykit)
 library(mboost)
-source("mlr_wrapper.R")
-#source("mlr_wrapper_factor.R")
+#source("mlr_wrapper.R")
+source("mlr_wrapper_factor.R")
 set.seed(177)
 source("xgboost_classif.R")
 
@@ -28,6 +28,7 @@ taskinfo_all_classif_num = taskinfo_all_classif[taskinfo_all_classif$number.of.s
 ## Task 1: churn
 churn.OML.task = getOMLTask(146227)
 churn = churn.OML.task$input$data.set$data
+churn = churn[!churn$number_customer_service_calls %in% c(8,9),]
 churn.task = makeClassifTask(data = churn, target = "class")
 
 ## Task 2: Bank-marketing

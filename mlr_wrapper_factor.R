@@ -492,7 +492,7 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
       y_int[l] <- 1
     }
   }
-  levels <- levels(y)
+  target_levels <- levels(y)
   
   # Load the gradient and risk function (using the mboost family.R code)
   family = Binomial()
@@ -715,7 +715,8 @@ trainLearner.classif.icb = function (.learner, .task, .subset, .weights = NULL, 
   return_list[["Transition Iterations"]] <-c(transition_splines,transition_trees,transition_trees_max)
   return_list[["Risk"]] <- c(mb_linear$risk(),mb_spline$risk()[-1],mb_tree$risk()[-1],mb_tree_max$risk()[-1]) / dim(data)[1]
   return_list[["Prediction_Models"]] <- Prediction_Models
-  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, target_class, bl2, df_spline, levels)
+  return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, bl2, df_spline)
+  return_list[["TargetLevels"]] <- target_levels
   return_list[["Data"]] <- X
   return_list[["FeatureNames"]] <- f_names
   return_list[["FeatureLevels"]] <- lapply(data, levels.default)
@@ -749,7 +750,7 @@ predictLearner.classif.icb = function (.learner, .model, .newdata, ...)
   
   # If new factor levels occur in X_new, convert them to NAs
   for (f in 1:dim(X_new)[2]){
-    if(colnames(X_new)[f] != target & is.factor(X_new[,f])){
+    if(colnames(X_new)[f] %in% icb_object$FeatureNames & is.factor(X_new[,f])){
       f_levels = eval(parse(text = paste0("icb_object$FeatureLevels$",colnames(X_new)[f]) ))
       X_new[,f] <- factor(X_new[,f], levels = f_levels)
     }
@@ -764,11 +765,10 @@ predictLearner.classif.icb = function (.learner, .model, .newdata, ...)
   }
   
   
-  
   # Only allow the feature which have been in the training data
-  X_new <- X_new[,which(colnames(X_new) %in% icb_object$FeatureNames)]
+  #X_new <- X_new[,which(colnames(X_new) %in% icb_object$FeatureNames)]
   
-  X_new <- droplevels(X_new)
+  #X_new <- droplevels(X_new)
   
   # Create an empty vector with the length of newdata
   prediction <- vector(mode = "numeric", length = dim(X_new)[1])
@@ -811,7 +811,6 @@ predictLearner.classif.icb = function (.learner, .model, .newdata, ...)
   prediction_spline <- prediction_linear + pred_iteration
   
   
-  
   # #################### For the tree (depth=2) part: ##########################################
   
   while(iteration <= (icb_object$`Transition Iterations`[3])){
@@ -836,19 +835,20 @@ predictLearner.classif.icb = function (.learner, .model, .newdata, ...)
   
   prediction_tree_max <- prediction_tree + pred_iteration
   
-  levels <- c(icb_object$Input_Parameters[7],icb_object$Input_Parameters[8])
+  levels <- c(icb_object$TargetLevels[1],icb_object$TargetLevels[2])
   
   prediction_label <- numeric(length(prediction_tree_max))
   
   for(i in 1:length(prediction_tree_max)){
     if(prediction_tree_max[i] < 0){
-      prediction_label[i] <- levels[[1]]
+      prediction_label[i] <- levels[1]
     } else{
-      prediction_label[i] <- levels[[2]]
+      prediction_label[i] <- levels[2]
     }
   }
   
   
-  
   return(as.factor(prediction_label))
+  
+  
 }
