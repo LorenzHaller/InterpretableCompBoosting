@@ -294,7 +294,6 @@ predictLearner.regr.icb = function (.learner, .model, .newdata, ...)
 {
   icb_object <- .model$learner.model
   
-  
   # Check for NAs and exclude the rows with NAs
   if(anyNA(.newdata)){
     X_new <- na.omit(.newdata)
@@ -305,8 +304,8 @@ predictLearner.regr.icb = function (.learner, .model, .newdata, ...)
   
   
   # If new factor levels occur in X_new, convert them to NAs
-  for (f in 1: dim(X_new)[2]){
-    if(colnames(X_new)[f] != target & is.factor(X_new[,f])){
+  for (f in 1:dim(X_new)[2]){
+    if(colnames(X_new)[f] %in% icb_object$FeatureNames & is.factor(X_new[,f])){
       f_levels = eval(parse(text = paste0("icb_object$FeatureLevels$",colnames(X_new)[f]) ))
       X_new[,f] <- factor(X_new[,f], levels = f_levels)
     }
@@ -321,11 +320,10 @@ predictLearner.regr.icb = function (.learner, .model, .newdata, ...)
   }
   
   
-  
   # Only allow the feature which have been in the training data
-  X_new <- X_new[,which(colnames(X_new) %in% icb_object$FeatureNames)]
+  #X_new <- X_new[,which(colnames(X_new) %in% icb_object$FeatureNames)]
   
-  X_new <- droplevels(X_new)
+  #X_new <- droplevels(X_new)
   
   # Create an empty vector with the length of newdata
   prediction <- vector(mode = "numeric", length = dim(X_new)[1])
