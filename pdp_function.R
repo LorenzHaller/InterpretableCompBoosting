@@ -1,4 +1,4 @@
-pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
+pdp_function <- function(icb_object, newdata = NULL, ylim = NULL, col = "black"){
   
   data = icb_object$Data
   feature_names = icb_object$FeatureNames
@@ -23,7 +23,7 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
     ## If feature is a factor
     if(is.factor(data[,w])){
       if(!is.null(linear_coefficients[[1]])){
-        plot.mboost(icb_object$Prediction_Models$Linear, w, type = "l")
+        plot.mboost(icb_object$Prediction_Models$Linear, w, type = "l", col = col)
       }
     }
     
@@ -34,16 +34,16 @@ pdp_function <- function(icb_object, newdata = NULL, ylim = NULL){
       pr_spline = predict(icb_object$Prediction_Models$Spline, newdata = data, which = w)
       
       if(!is.null(linear_coefficients[[1]])){
-        plot.mboost(icb_object$Prediction_Models$Linear, w, type = "l")
+        plot.mboost(icb_object$Prediction_Models$Linear, w, type = "l", col = col)
         
         if(pr_spline[1] != 0){
           pr = pr_linear + pr_spline
           
-          points(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="b")
+          points(sort(data_temp[,1]), pr[order(data_temp[,1]),1],type="l", col = col)
         }
         
       } else if(pr_spline[1] != 0){
-        plot.mboost(icb_object$Prediction_Models$Spline, w)
+        plot.mboost(icb_object$Prediction_Models$Spline, w, col = col, type = "l")
         
       } 
     }

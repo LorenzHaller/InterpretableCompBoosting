@@ -59,19 +59,19 @@ source("family.R")
 
 
 ##### MODEL TRAINING #################################################################
-
+source("helper_functions.R")
 
 ### OWN METHOD MBOOST WRAPPER
 #source("icb_mboost_wrapper_offset.R")
 source("icb_factors.R")
 micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
-                                            target_class = "Binomial", bl2 = "bbs",
+                                            target_class = "Gaussian", bl2 = "btree",
                                             epsilon = 0.005, max_depth = 4)
 
 # Make predictions
 #source("icb_predict_wrapper_offset.R")
 source("Icb_predict_factors.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="binaryClass")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
 
 # Show results in table
 source("helper_functions.R")
@@ -94,7 +94,7 @@ individual_barplot(pred, subset = c(1,7,27,33), plot.which = "Loss")
 
 # Visualize feature effects
 source("pdp_function.R")
-pdp_function(icb_object = micb_wrapper)
+pdp_function(icb_object = micb_wrapper, col = "red")
 
 # Plot number of features over time
 source("helper_functions.R")
@@ -104,18 +104,8 @@ plot.icb(micb_object = micb_wrapper, predict_object = pred, fcount = T,
 # Plot Main Effect Complexity
 source("C:/Users/halle/Downloads/Uni/Interpretable Machine Learning/FunComplexity.R")
 library(iml)
-
-mod = micb_wrapper$Prediction_Models$Spline
-
-pred.icb = iml::Predictor$new(mod, train)
-
-grid.size = 100
-fc = FunComplexity$new(pred.icb, epsilon = 0.01,grid.size = grid.size)
-
-fc$approx_models$V12$n_coefs
-fc$approx_models$V4$n_coefs
-  
-plot(fc$approx_models$V12) 
+source("helper_functions.R")
+main_effect_plot(micb_wrapper, data = train, feature = "Solar.R")
 
 
 

@@ -21,5 +21,8 @@ predictor = Predictor$new(rf, data = X, y = airquality$Ozone)
 pdp = FeatureEffect$new(predictor = predictor, feature = "Temp" , method = "pdp")
 plot(pdp)
 
+ale = FeatureEffect$new(predictor = predictor, feature = "Temp" , method = "ale")
+plot(ale)
+
 imp = FeatureImp$new(predictor, loss = "mse")
 plot(imp)

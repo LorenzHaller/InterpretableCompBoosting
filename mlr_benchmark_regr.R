@@ -34,9 +34,6 @@ bh.OML.task = getOMLTask(4857)
 bh = bh.OML.task$input$data.set$data
 bh.task = makeRegrTask(data = bh, target = "MEDV")
 
-dummies_bh <- dummyVars(" ~ .", data = bh, fullRank = T)
-bhdata <- data.frame(predict(dummies_bh, newdata = bh))
-gamboost(formula = MEDV ~ CHAS.1 + AGE + PTRATIO, data = bhdata, baselearner = "bbs")
 # ## Task 2: CPMP-2015-regression
 # cpmp.OML.task = getOMLTask(189931)
 # cpmp = cpmp.OML.task$input$data.set$data
@@ -51,7 +48,12 @@ wages.task = makeRegrTask(data = wages, target = "WAGE")
 ## Task 3: credit-g
 creditg.OML.task = getOMLTask(146813)
 creditg = droplevels(creditg.OML.task$input$data.set$data)
+creditg$num_dependents <- as.factor(creditg$num_dependents)
+creditg$installment_commitment <- as.factor(creditg$installment_commitment)
+creditg$existing_credits <- as.factor(creditg$existing_credits)
+creditg$residence_since <- as.factor(creditg$residence_since)
 creditg.task = makeRegrTask(data = creditg, target = "credit_amount")
+
 
 ## Task 4: kin8nm 
 oml.task_2280 = getOMLTask(2280)
@@ -123,7 +125,7 @@ num_ps_spline = makeParamSet(
   makeNumericParam("epsilon", lower = 0.0005, upper = 0.1),
   makeDiscreteLearnerParam(id = "bl2", default = "bbs", values = c("bbs"), tunable = F),
   makeIntegerLearnerParam(id = "max_depth", lower = 3, upper = 8, tunable = T),
-  makeIntegerLearnerParam(id = "df_spline", lower = 2L, upper = 5L, tunable = T)
+  makeIntegerLearnerParam(id = "df_spline", lower = 2L, upper = 3L, tunable = T)
 )
 
 icb.spline = makeTuneWrapper("regr.icb", resampling = inner, par.set = num_ps_spline,

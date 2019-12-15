@@ -429,3 +429,58 @@ individual_barplot <- function(pred_object, subset = NULL, plot.which = c("Loss"
   
   
 }
+
+
+main_effect_plot  <- function(icb_object, data, feature = NULL,
+                              grid.size = 100, epsilon = 0.01){
+  
+  if(is.null(feature)){
+    stop("No feature selected!")
+  }
+  
+  if(is.factor(eval(parse(text = paste("data$",feature,sep=""))))){
+    stop("Stop. Factors are not supported.")
+  }
+  
+  w = which(icb_object$FeatureNames == feature)
+  
+  d = which(colnames(data) == feature)
+  
+  if(length(w) != 1 | length(d) != 1){
+    stop("Selected feature not available!")
+  }
+  
+  #pr_linear = predict(icb_object$Prediction_Models$Linear, newdata = data, which = w)
+  pr_spline = predict(icb_object$Prediction_Models$Spline, newdata = data, which = w)
+  
+  
+  coeff_string = paste("icb_object$Prediction_Models$Linear$coef()$`bols(",feature,")`",sep="")
+  linear_coefficients = eval(parse(text = coeff_string))
+  
+  if(pr_spline[1] != 0){
+    
+    mod = icb_object$Prediction_Models$Spline
+    
+    pred.icb = iml::Predictor$new(mod, data)
+    
+    fc = FunComplexity$new(pred.icb, epsilon = epsilon, grid.size = grid.size)
+    
+    plot(fc$approx_models[[d]])
+    
+  } else if(pr_spline[1] == 0 & !is.null(linear_coefficients[[1]])){
+    
+    mod = icb_object$Prediction_Models$Linear
+    
+    pred.icb = iml::Predictor$new(mod, data)
+    
+    fc = FunComplexity$new(pred.icb, epsilon = epsilon, grid.size = grid.size)
+    
+    plot(fc$approx_models[[d]])
+    
+  } else{
+    
+    stop("Feature not included in first and second stage of the model.")
+  }
+    
+  
+}
