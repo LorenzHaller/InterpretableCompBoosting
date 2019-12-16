@@ -44,7 +44,7 @@ formula <- Class ~ V1 + V2 + V3 + V4 + V5 + V6 + V7 + V8 + V9 + V10 + V11 + V12 
 
 
 # Split the data in training and test data (75/25 split)
-set.seed(280795)
+set.seed(280798)
 sample <- sample.int(n = nrow(data), size = floor(.66*nrow(data)), replace = F)
 train <- data[sample, ]
 test  <- data[-sample, ]
@@ -71,7 +71,7 @@ micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1,
 # Make predictions
 #source("icb_predict_wrapper_offset.R")
 source("Icb_predict_factors.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="Ozone")
+pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="quality")
 
 # Show results in table
 source("helper_functions.R")
