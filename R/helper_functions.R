@@ -355,13 +355,14 @@ individual_barplot <- function(pred_object, subset = NULL, plot.which = c("Loss"
     
     abs_data_frame$Loss <- as.numeric(as.character(abs_data_frame$Loss))
     
-    ggplot(abs_data_frame, aes(x = Observation, y = Loss, fill = Stage))  + 
+    p <- ggplot(abs_data_frame, aes(x = Observation, y = Loss, fill = Stage))  + 
       ggtitle("Absolute loss improvement per stage") + 
       geom_bar(stat='identity',position=position_dodge()) + 
       # geom_text(aes(y=Loss, label=Loss), vjust=1.6, 
       #           color="black", size=3.5) +
       coord_flip()
     
+    return(p)
     
   } else if(plot.which == "Prediction"){
     
@@ -388,7 +389,7 @@ individual_barplot <- function(pred_object, subset = NULL, plot.which = c("Loss"
     
     abs_data_frame$Prediction <- as.numeric(as.character(abs_data_frame$Prediction))
     
-    ggplot(abs_data_frame, aes(x = Observation, y = Prediction, fill = Stage))  + 
+    p <- ggplot(abs_data_frame, aes(x = Observation, y = Prediction, fill = Stage))  + 
       ggtitle("Prediction per stage") + 
       geom_hline(yintercept = as.numeric(ind_matrix[[1,1]]), linetype = "dotted", size = 0.75) +
       geom_bar(stat='identity',position=position_dodge()) + 
@@ -397,6 +398,8 @@ individual_barplot <- function(pred_object, subset = NULL, plot.which = c("Loss"
       # geom_text(aes(y=Loss, label=Loss), vjust=1.6, 
       #           color="black", size=3.5) +
       coord_flip()
+    
+    return(p)
   }
   
   

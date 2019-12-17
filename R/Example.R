@@ -98,12 +98,12 @@ riskplot.icb(icb_object = train_list, multiple = TRUE,
 
 
 # Show individual results for all observations in predict data in a table
-riskplot.icb(pred_object = pred, data_subset = c(1,7,27,181))
+riskplot.icb(pred_object = pred, data_subset = c(1,7,27,33))
 
 # Show individual results for all observations in predict data in a table
-riskplot.icb(pred_object = pred, data_subset = c(1,7,27,181), type = "barplot", 
-             plot.which = "Loss")
-riskplot.icb(pred_object = pred, data_subset = c(1,7,27,181), type = "barplot", 
+riskplot.icb(pred_object = pred, data_subset = c(1,7,27,33), type = "barplot", 
+            plot.which = "Loss")
+riskplot.icb(pred_object = pred, data_subset = c(1,7,27,33), type = "barplot", 
              plot.which = "Prediction")
 
 # Plot number of features over time
@@ -117,5 +117,5 @@ riskplot.icb(icb_object = icb.model, pred_object = pred, fcount = T, type = "his
 featureplot.icb(icb_object = icb.model, col = "black", type = "pdp")
 
 # Plot Main Effect Complexity
-featureplot.icb(icb.model, data = train, feature = "humidity", type = "ale")
+featureplot.icb(icb.model, data = train, feature = "Wind", type = "ale")
 

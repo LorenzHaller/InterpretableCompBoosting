@@ -38,12 +38,12 @@ riskplot.icb <- function(icb_object = NULL,
   }
   
   if(!is.null(pred_object) & !is.null(data_subset) & type == "barplot"){
-    individual_barplot(pred_object, subset = data_subset, plot.which = plot.which)
+    show(individual_barplot(pred_object, subset = data_subset, plot.which = plot.which))
   }
   
   if(type == "histogram"){
-    plot.icb(micb_object = icb_object, predict_object = pred_object, fcount = fcount,
-             data_name = data_names)
+    show(plot.icb(micb_object = icb_object, predict_object = pred_object, fcount = fcount,
+             data_name = data_names))
   }
     
     
@@ -56,13 +56,13 @@ featureplot.icb <- function(icb_object, type = "pdp", col = "black", feature = N
                             data = NULL){
   
   if(type == "pdp"){
-    pdp_function(icb_object = icb_object, col = col)
+    print(pdp_function(icb_object = icb_object, col = col))
   }
   
   if(type == "ale"){
     library(checkmate)
     library(data.table)
-    main_effect_plot(icb_object, data = data, feature = feature)
+    print(main_effect_plot(icb_object, data = data, feature = feature))
   }
 
 
