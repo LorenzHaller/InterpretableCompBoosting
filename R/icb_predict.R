@@ -1,12 +1,10 @@
-icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
-  # icb_object:     output object from the interpretable comp boosting function
-  # newdata:        newdata that will be used to make predictions
-  # target:         string that can specify the target variable; should be filled if newdata 
-                    # contains the target variable -> inner risk will be computed
+icb_predict <- function(icb_object, newdata, target = NULL){
+  # icb_object:     output object from the icb function
+  # newdata:        test data
+  # target:         string that can specify the target variable; should be filled if newdata contains the target variable to compute risk
   
-  #formula <- terms.formula(icb_object$Input_Parameters[4])
-  #X <- model.matrix(formula, newdata)
-  #X_new <- cbind(1, newdata)
+  # Performing checks on the input parameters
+  stopifnot(is.data.frame(newdata))
   
   # Check for NAs and exclude the rows with NAs
   if(anyNA(newdata)){
@@ -61,11 +59,6 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
     }
   }
   
-  #X_new <- summary(droplevels(X_new))
-  
-  # Make one-hot encoding for factor variables
-  #dummies <- dummyVars(" ~ .", data = X_new, fullRank = T)
-  #X_new <- data.frame(predict(dummies, newdata = X_new))
   
   # Only allow the feature which have been in the training data
   X_new <- X_new[,which(colnames(X_new) %in% icb_object$FeatureNames)]
@@ -141,10 +134,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
       stage_predictions[j,2] = prediction_linear[j]
     }
   }
-  
-  ## Version 2: use result of linear coefficients (uses one specific nu)
-  #prediction <- as.matrix(cbind(1, X_new[,-1])) %*% icb_object$Coefficients$Linear_coefficients 
-  
+
   
   
   # For the splines part:
@@ -234,12 +224,7 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   }
   
   
-  
-  
-  
-  
-  
-  
+
   if(target_class=="Binomial"){
     predicted_labels <- numeric(length(prediction_tree_max))
     for(lp in 1:length(predicted_labels)){

@@ -1,15 +1,17 @@
-interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class="Gaussian",
+icb_onehot <- function(data, formula, nu=0.1, target_class="Gaussian",
                                      epsilon = 0.001, bl2=c("bbs","btree"), df_spline = 4,
                                      max_depth = 8,
                                      min_split = 20, min_bucket = round(min_split/3)){
-  # data:     a data frame containing target and features
-  # formula:  a formula specifying the model
-  ## y:       the target variable
-  ## X:       the feature matrix
-  # nu:       the step size or shrinkage parameter (default = 0.1)
-  # mstop:    the maximum number of iterations
-  # family:   the family of the target variable (default = Gaussian)
-  # epsilon:  necessary relative epsilon improvement for one iteration
+  # data:           a data frame containing target and features
+  # formula:        a formula specifying the model
+  # nu:             the step size or shrinkage parameter (default = 0.1)
+  # target_class:   the family of the target variable (default = Gaussian)
+  # epsilon:        necessary relative epsilon improvement for one iteration (default = 0.001)
+  # bl2:            the non-linear model used in the second stage: P-splines ("bbs") or tree stumps ("btree)
+  # df_spline:      the degree of the splines that should be fitted when P-splines are used
+  # max_depth:      the maximum depth of the trees in the fourth stage
+  # min_split:      minimum number of observations in a tree node for the node to be considered in splitting
+  # min_bucket:     minimum number of observations allowed in a terminal tree node
   
   
   # Performing checks on the input parameters: formula, data, nu, mstop, family

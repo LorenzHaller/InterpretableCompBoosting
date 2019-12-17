@@ -1,12 +1,10 @@
-icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
-  # icb_object:     output object from the interpretable comp boosting function
-  # newdata:        newdata that will be used to make predictions
-  # target:         string that can specify the target variable; should be filled if newdata 
-                    # contains the target variable -> inner risk will be computed
+icb_onehot_predict <- function(icb_object, newdata, target = NULL){
+  # icb_object:     output object from the icb function
+  # newdata:        test data
+  # target:         string that can specify the target variable; should be filled if newdata contains the target variable to compute risk
   
-  #formula <- terms.formula(icb_object$Input_Parameters[4])
-  #X <- model.matrix(formula, newdata)
-  #X_new <- cbind(1, newdata)
+  # Performing checks on the input parameters
+  stopifnot(is.data.frame(newdata))
   
   # Check for NAs and exclude the rows with NAs
   if(anyNA(newdata)){
@@ -17,23 +15,6 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
   }
   
   
-  # # If new factor levels occur in X_new, convert them to NAs
-  # for (f in 1: dim(X_new)[2]){
-  #   if(colnames(X_new)[f] != target & is.factor(X_new[,f])){
-  #     print(levels(X_new[,f]))
-  #     f_levels = eval(parse(text = paste0("icb_object$FeatureLevels$",colnames(X_new)[f]) ))
-  #     X_new[,f] <- factor(X_new[,f], levels = f_levels)
-  #     print(levels(X_new[,f]))
-  #   }
-  # }
-  # 
-  # # Exclude the NAs (new factor levels)
-  # if(anyNA(X_new)){
-  #   X_new <- na.omit(X_new)
-  #   warning("Rows with new factor levels excluded.")
-  # } else{
-  #   X_new <- X_new
-  # }
   
   
   oldw <- getOption("warn")
@@ -140,9 +121,6 @@ icb_predict_wrapper <- function(icb_object, newdata, target = NULL){
       stage_predictions[j,2] = prediction_linear[j]
     }
   }
-  
-  ## Version 2: use result of linear coefficients (uses one specific nu)
-  #prediction <- as.matrix(cbind(1, X_new[,-1])) %*% icb_object$Coefficients$Linear_coefficients 
   
   
   

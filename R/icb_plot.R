@@ -6,7 +6,14 @@ riskplot.icb <- function(icb_object = NULL,
                          plot.which = "Loss",
                          data_names = NULL,
                          fcount = FALSE){
-  
+  # icb_object:   an object returned from the icb function
+  # pred-object:  a prediction object returned from the icb_predict function
+  # multiple:     indicates if one only wants to look at one data set (FALSE) or multiple (TRUE)
+  # data_subset:  subset of observations of the test data which should be visualized
+  # type:         type of plot produced: a risk table ("table"), barplot ("barplot") or risk plot ("histogram")
+  # plot.which:   indicates if either the "Loss" or the "Prediction" change should be visualized for individual observations
+  # data_names:   the name(s) of the data set(s)
+  # fcount:       indicates if the number of features should be displayed in the risk plot
   
   if(isFALSE(multiple) & is.null(data_subset) & !is.null(icb_object)){
     print(stage_risk(micb_object = icb_object))
