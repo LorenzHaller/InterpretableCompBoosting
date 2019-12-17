@@ -40,23 +40,23 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
   data <- droplevels(data)
   
-  # # Make one-hot encoding for factor variables
-  # if(target_class=="Binomial"){
-  #   dummies <- dummyVars(" ~ .", data = data[,colnames(data) != target], fullRank = T)
-  #   data <- data.frame(predict(dummies, newdata = data[,colnames(data) != target]))
-  #   data <- data.frame(data,target_data)
-  # } else if(target_class == "Gaussian"){
-  #   dummies <- dummyVars(" ~ .", data = data, fullRank = T)
-  #   data <- data.frame(predict(dummies, newdata = data))
-  # }
-  # 
+  # Make one-hot encoding for factor variables
+  if(target_class=="Binomial"){
+    dummies <- dummyVars(" ~ .", data = data[,colnames(data) != target], fullRank = T)
+    data <- data.frame(predict(dummies, newdata = data[,colnames(data) != target]))
+    data <- data.frame(data,target_data)
+  } else if(target_class == "Gaussian"){
+    dummies <- dummyVars(" ~ .", data = data, fullRank = T)
+    data <- data.frame(predict(dummies, newdata = data))
+  }
+  
   # Create a vector that contains the number of unique values for every feature
-  #len_vector <- as.vector(sapply(sapply(data[,colnames(data) != target], unique), length))
-  #len_boolean <- len_vector < 3
+  len_vector <- as.vector(sapply(sapply(data[,colnames(data) != target], unique), length))
+  len_boolean <- len_vector < 3
   #len_boolean <- len_boolean[!colnames(data) %in% target]
-  # 
-  # # Create formula
-  # formula <- as.formula(paste(target,"~ ."))
+  
+  # Create mlr task to get full formula
+  formula <- as.formula(paste(target,"~ ."))
   
   # Save feature names of one-hot-encoded data
   f_names <- colnames(data)[which(colnames(data) != target)]
@@ -186,11 +186,41 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     iteration <- iteration + 1 
 
     
-    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
-                                 baselearner = bl2,
-                                 offset = mb_linear$fitted(),
-                                 control = boost_control(nu = nu, mstop = 1))
+    if(bl2 == "bbs"){
+      
+      # Create a spline formula where for factors tree stumps are used
+      formula_features <- c()
+      
+      for(f in 1:length(f_names)){
+        if(len_vector[f] < 3){
+          feat_bl <- paste0("btree(",f_names[f],",tree_controls = partykit::ctree_control(maxdepth=1, minbucket=",min_bucket,
+                            ",minsplit=",min_split,"))")
+          formula_features <- c(formula_features,feat_bl)
+        } else{
+          feat_bl <- paste0("bbs(",f_names[f],",df = ",df_spline,")")
+          formula_features <- c(formula_features,feat_bl)
+        }
+      }
+      
+      feat_string <- paste(formula_features,collapse = " + ")
+      target_feat_string <- as.formula(paste(target," ~ ", feat_string))
+      
+      mb_spline <- mboost::gamboost(formula = target_feat_string, data = data, 
+                                    family = family,
+                                    offset = mb_linear$fitted(),
+                                    control = boost_control(nu = nu, mstop = 1)) 
         
+      # mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+      #                              baselearner = bl2, dfbase = df_spline,
+      #                              offset = mb_linear$fitted(),
+      #                              control = boost_control(nu = nu, mstop = 1))
+      
+    } else{
+      mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+                                   baselearner = bl2,
+                                   offset = mb_linear$fitted(),
+                                   control = boost_control(nu = nu, mstop = 1))
+    }
     # Check if feature added is new
     if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
       feature_list <- c(feature_list,as.character(mb_spline$xselect()[iteration-transition_splines]))
@@ -232,10 +262,41 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
     
     iteration <- iteration + 1 
     
-    mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+    if(bl2 == "bbs"){
+      
+      # Create a spline formula where for factors tree stumps are used
+      formula_features <- c()
+      
+      for(f in 1:length(f_names)){
+        if(len_vector[f] < 3){
+          feat_bl <- paste0("btree(",f_names[f],",tree_controls = partykit::ctree_control(maxdepth=1, minbucket=",min_bucket,
+                            ",minsplit=",min_split,"))")
+          formula_features <- c(formula_features,feat_bl)
+        } else{
+          feat_bl <- paste0("bbs(",f_names[f],",df = ",df_spline,")")
+          formula_features <- c(formula_features,feat_bl)
+        }
+      }
+      
+      feat_string <- paste(formula_features,collapse = " + ")
+      target_feat_string <- as.formula(paste(target," ~ ", feat_string))
+      
+      mb_spline <- mboost::gamboost(formula = target_feat_string, data = data, 
+                                    family = family,
+                                    offset = mb_linear$fitted(),
+                                    control = boost_control(nu = nu, mstop = 1)) 
+      
+      # mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
+      #                            baselearner = bl2, dfbase = df_spline,
+      #                            offset = mb_linear$fitted(),
+      #                            control = boost_control(nu = nu, mstop = 1))
+      
+    } else{
+      mb_spline = mboost::gamboost(formula = formula, data = data, family = family,
                                    baselearner = bl2,
                                    offset = mb_linear$fitted(),
                                    control = boost_control(nu = nu, mstop = 1))
+    }
     
     # Check if feature added is new
     if(!mb_spline$xselect()[iteration-transition_splines] %in% feature_list){
@@ -275,6 +336,20 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
   iteration <- iteration + 1 
   
+  #ctrl = partykit::ctree_control(maxdepth = 2L)
+  
+  
+  # # Extract feature name
+  # feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
+  # 
+  # # Create formula for applying btree
+  # tree_formula <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl)")
+  # tree_formula <- as.formula(tree_formula)
+  # 
+  # mb_tree = mboost(formula = tree_formula, 
+  #                    data = data, family = family, offset = fitted_values,
+  #                    control = boost_control(nu = nu, mstop = 1))
+  
   mb_tree = blackboost(formula = formula, data = data, offset = fitted_values,
                           control = boost_control(nu = nu, mstop = 1), family = family,
                            tree_controls = partykit::ctree_control(
@@ -284,7 +359,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                              minsplit = min_split, 
                              minbucket = min_bucket,
                              maxdepth = 2, 
-                             saveinfo = TRUE))
+                             saveinfo = FALSE))
   
   # Check if feature added is new
   if(!mb_tree$xselect()[iteration-transition_trees] %in% feature_list){
@@ -331,6 +406,20 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   
   iteration <- iteration + 1 
   
+  # ctrl_max = partykit::ctree_control(maxdepth = max_depth)
+  # 
+  # 
+  # # Extract feature name
+  # feature_string <- paste(colnames(X)[2:length(colnames(X))], collapse=", ")
+  # 
+  # # Create formula for applying btree
+  # tree_formula_max <- paste(target, "~ btree(", feature_string, ",tree_controls = ctrl_max)")
+  # tree_formula_max <- as.formula(tree_formula_max)
+  # 
+  # mb_tree_max = mboost(formula = tree_formula_max, 
+  #                  data = data, family = family, offset = mb_tree$fitted(),
+  #                  control = boost_control(nu = nu, mstop = 1))
+  
   mb_tree_max = blackboost(formula = formula, data = data, offset = fitted_values,
                        control = boost_control(nu = nu, mstop = 1), family = family,
                        tree_controls = partykit::ctree_control(
@@ -340,7 +429,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
                          minsplit = min_split, 
                          minbucket = min_bucket,
                          maxdepth = max_depth, 
-                         saveinfo = TRUE))
+                         saveinfo = FALSE))
   
   # Check if a feature added is new
   if(!mb_tree_max$xselect()[iteration-transition_trees_max] %in% feature_list){
@@ -400,8 +489,7 @@ interpretable_comp_boost_wrapper <- function(data, formula, nu=0.1, target_class
   return_list[["Input_Parameters"]] <-c(nu, iteration, epsilon, formula_orig, target_class, bl2, df_spline, levels)
   return_list[["Data"]] <- data[,!colnames(data) %in% target]
   return_list[["FeatureNames"]] <- f_names
-  return_list[["FeatureLevels"]] <- lapply(data, levels.default)
-  #return_list[["CATFeatures"]] <- len_boolean
+  return_list[["CATFeatures"]] <- len_boolean
   return_list[["Feature_Counter"]] <- feature_counter
   return_list[["Riskfunction"]] <- riskfct
   if(target_class == "Binomial"){

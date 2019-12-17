@@ -1,49 +1,66 @@
-######################################################################################
-#### Benchmark to compare test and train errors: Airquality Data Example
-######################################################################################
+##############################################################################################
+#### Example script to show the functionalities of Interpretable Component-wise Boosting
+##############################################################################################
 
-##### PREPARATION ####################################################################
-
-setwd("C:/Users/halle/Downloads/Uni/Interpretable Machine Learning/InterpretableCompBoosting")
-# for cip pool
-#setwd("H:/Interpretable Comp Boost/InterpretableCompBoosting")
+setwd("C:/Users/halle/Downloads/Uni/Interpretable Machine Learning/InterpretableCompBoosting/R")
 
 
-# Load data for Airquality Example
+#### Load packages ###########################################################################
+library(mboost)
+library(OpenML)
+library(iml)
+library(formattable)
+library(partykit)
+library(ggplot2)
+
+#### Load scripts ############################################################################
+source("family.R")
+source("helper_functions.R")
+source("icb.R")
+source("icb_predict.R")
+source("helper_functions.R")
+source("pdp_function.R")
+source("FunComplexity.R")
+source("icb_plot.R")
+
+
+#### Prepare the Data Examples ###############################################################
+
+### Airquality Example
 data("airquality")
 attach(airquality)
 data <- na.omit(airquality)
 # Get model formula and prepare data
 formula <- Ozone ~ Solar.R + Wind + Temp + Month + Day
 formula <- terms.formula(formula)
+target <- "Ozone"
 
-# Load data for Boston Housing Example
+### Boston Housing Example
 data(BostonHousing, package = "mlbench")
 data <- BostonHousing
 formula <- medv ~ crim + zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + b + lstat
 formula <- terms.formula(formula)
+target <- "medv"
 
-# Bike Demand Data Kaggle
-library(OpenML)
-bike.OML.task = getOMLTask(7393)
-bike = bike.OML.task$input$data.set$data
-exclude_cols = c("datetime")
-data = bike[,!colnames(bike) %in% exclude_cols]
-data = data[data$weather != 4,]
+### Bike Demand Data Kaggle
+bike.OML.task <- getOMLTask(7393)
+bike <- bike.OML.task$input$data.set$data
+exclude_cols <- c("datetime")
+data <- bike[,!colnames(bike) %in% exclude_cols]
+data <- data[data$weather != 4,]
 data$weather <- factor(data[,5], levels = c(1,2,3))
 formula <- count ~ time + season + holiday + workingday + weather + temp + atemp + humidity + windspeed + dayOfWeek
+target <- "count"
 
-# Classification Data: 
-bank.OML.task = getOMLTask(9899)
-bank = bank.OML.task$input$data.set$data
-#bank.task = makeClassifTask(data = bank, target = "Class")
-data = bank
+### Bank Data (Classification)
+bank.OML.task <- getOMLTask(9899)
+bank <- bank.OML.task$input$data.set$data
+data <- bank
 formula <- Class ~ V1 + V2 + V3 + V4 + V5 + V6 + V7 + V8 + V9 + V10 + V11 + V12 + V13 + V14 + V15 + V16
+target <- "Class"
 
 
-
-
-# Split the data in training and test data (75/25 split)
+### Split the data in training and test data (66/34 split)
 set.seed(280798)
 sample <- sample.int(n = nrow(data), size = floor(.66*nrow(data)), replace = F)
 train <- data[sample, ]
@@ -52,60 +69,56 @@ test  <- data[-sample, ]
 
 
 
-#Load family.R
-source("family.R")
-
 
 
 
 ##### MODEL TRAINING #################################################################
-source("helper_functions.R")
 
-### OWN METHOD MBOOST WRAPPER
-#source("icb_mboost_wrapper_offset.R")
-source("icb_factors.R")
-micb_wrapper = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
+icb.model = interpretable_comp_boost_wrapper(train, formula, nu=0.1, 
                                             target_class = "Gaussian", bl2 = "btree",
                                             epsilon = 0.005, max_depth = 4)
 
-# Make predictions
-#source("icb_predict_wrapper_offset.R")
-source("Icb_predict_factors.R")
-pred = icb_predict_wrapper(icb_object = micb_wrapper, newdata = test, target="quality")
+##### PREDICTING #####################################################################
 
-# Show results in table
-source("helper_functions.R")
-stage_risk(micb_object = micb_wrapper)
-stage_risk(pred_object = pred)
+pred = icb_predict_wrapper(icb_object = icb.model, newdata = test, target=target)
+
+
+#### VISUALIZATION ###################################################################
+
+# Show results for one data set in table
+riskplot.icb(icb_object = icb.model, pred_object = pred)
+
 
 # Show results for multiple data sets
-source("helper_functions.R")
 train_list = list()
-train_list[[1]] = test_Air
-train_list[[2]] = test_bh
-train_list[[3]] = test_bike
-data_risk_table(icb_list = train_list, train = F, 
-                data_names = c("Airquality","Boston Housing","Bike"))
+train_list[[1]] = air.model
+train_list[[2]] = bh.model
+train_list[[3]] = bike.model
+riskplot.icb(icb_object = train_list, multiple = TRUE, 
+             data_names = c("Airquality","Boston Housing","Bike"))
 
-# Show individual results for all observations in predict data
-source("helper_functions.R")
-individual_stage_risk(pred, subset = c(1,7,27,33))
-individual_barplot(pred, subset = c(1,7,27,33), plot.which = "Loss")
 
-# Visualize feature effects
-source("pdp_function.R")
-pdp_function(icb_object = micb_wrapper, col = "red")
+# Show individual results for all observations in predict data in a table
+riskplot.icb(pred_object = pred, data_subset = c(1,7,27,181))
+
+# Show individual results for all observations in predict data in a table
+riskplot.icb(pred_object = pred, data_subset = c(1,7,27,181), type = "barplot", 
+             plot.which = "Loss")
+riskplot.icb(pred_object = pred, data_subset = c(1,7,27,181), type = "barplot", 
+             plot.which = "Prediction")
 
 # Plot number of features over time
-source("helper_functions.R")
-plot.icb(micb_object = micb_wrapper, predict_object = pred, fcount = T,
-         data_name = "Airquality")
+riskplot.icb(icb_object = icb.model, pred_object = pred, fcount = T, type = "histogram",
+         data_names = "Airquality")
+
+
+################## Visualize feature effects ###########################################
+
+# Plot Partial Dependence Plots
+featureplot.icb(icb_object = icb.model, col = "black", type = "pdp")
 
 # Plot Main Effect Complexity
-source("C:/Users/halle/Downloads/Uni/Interpretable Machine Learning/FunComplexity.R")
-library(iml)
-source("helper_functions.R")
-main_effect_plot(micb_wrapper, data = train, feature = "Solar.R")
+featureplot.icb(icb.model, data = train, feature = "humidity", type = "ale")
 
 
 
@@ -154,28 +167,28 @@ environment(mb_tree_2$fitted)$ens[[1]]
 
 ##### Plot the risk vs the number of iterations 
 
-plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
-     ylim=c(0,max(micb_wrapper$Risk)),xlim=c(0,micb_wrapper$Input_Parameters[[2]]),main="Own method vs mboost with different base learners")
-abline(v = micb_wrapper$`Transition Iterations`[1]+1)
-abline(v = micb_wrapper$`Transition Iterations`[2]+1)
-abline(v = micb_wrapper$`Transition Iterations`[3]+1)
+plot(1:length(icb.model$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
+     ylim=c(0,max(icb.model$Risk)),xlim=c(0,icb.model$Input_Parameters[[2]]),main="Own method vs mboost with different base learners")
+abline(v = icb.model$`Transition Iterations`[1]+1)
+abline(v = icb.model$`Transition Iterations`[2]+1)
+abline(v = icb.model$`Transition Iterations`[3]+1)
 points(1:length(avg_risk_test),avg_risk_test,type="b",col="red")
 
 #Mboost using linear terms
 points(1:length(mboost_bols$risk()),mboost_bols$risk()/dim(na.omit(train))[1],type="l",col="brown")
-h_pred_bols=micb_wrapper$Riskfunction(y=test$medv,f=mb_bols_pred)/dim(na.omit(test))[1]
+h_pred_bols=icb.model$Riskfunction(y=test$medv,f=mb_bols_pred)/dim(na.omit(test))[1]
 abline(h=h_pred_bols, col="brown")
 # Mboost using splines
 points(1:length(mboost_bols_bs$risk()),mboost_bols_bs$risk()/dim(na.omit(train))[1],type="l",col="blue")
-h_pred=micb_wrapper$Riskfunction(y=test$medv,f=mb_spline_pred)/dim(na.omit(test))[1]
+h_pred=icb.model$Riskfunction(y=test$medv,f=mb_spline_pred)/dim(na.omit(test))[1]
 abline(h=h_pred, col="blue")
 # Combine to mboost using trees
 points(1:length(mboost_tree$risk()),mboost_tree$risk()/dim(na.omit(train))[1],type="l",col="green")
-h_pred_tree=micb_wrapper$Riskfunction(y=test$medv,f=mb_tree_pred)/dim(na.omit(test))[1]
+h_pred_tree=icb.model$Riskfunction(y=test$medv,f=mb_tree_pred)/dim(na.omit(test))[1]
 abline(h=h_pred_tree, col = "green")
 # Combine to mboost using trees of depth = 2
 points(1:length(mb_tree_2$risk()),mb_tree_2$risk()/dim(na.omit(train))[1],type="l",col="orange")
-h_pred_tree_2=micb_wrapper$Riskfunction(y=test$medv,f=mb_tree_2_pred)/dim(na.omit(test))[1]
+h_pred_tree_2=icb.model$Riskfunction(y=test$medv,f=mb_tree_2_pred)/dim(na.omit(test))[1]
 abline(h=h_pred_tree_2, col = "orange")
 
 # Add a legend to the plot
@@ -195,11 +208,11 @@ legend(60,80,
 #points(1:length(micb_500$Risk),avg_risk,type="l",col="red")
 #points(1:length(avg_risk_test),avg_risk_test,type="l",col="blue")
 
-plot(1:length(micb_wrapper$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
-     ylim=c(0,2000),xlim=c(0,micb_wrapper$Input_Parameters[[2]]), main="Training vs test risk for own method")
+plot(1:length(icb.model$Risk),avg_risk_wrapper, xlab="Iteration",ylab="Average Risk",col="red",type="l", 
+     ylim=c(0,2000),xlim=c(0,icb.model$Input_Parameters[[2]]), main="Training vs test risk for own method")
 points(1:length(avg_risk_test),avg_risk_test,type="l",col="blue")
-abline(v = micb_wrapper$`Transition Iterations`[1])
-abline(v = micb_wrapper$`Transition Iterations`[2])
+abline(v = icb.model$`Transition Iterations`[1])
+abline(v = icb.model$`Transition Iterations`[2])
 legend(60,1900, 
        legend=c("Training", "Test"),
        col=c("red","blue"), 
@@ -218,7 +231,7 @@ plot(mboost_bols_bs)
 plot(mboost_tree)
 
 source("pdp_function.R")
-pdp_function(icb_object = micb_wrapper)
+pdp_function(icb_object = icb.model)
 
 
 ## Linear coefficients
